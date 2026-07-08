@@ -21,6 +21,73 @@ const keyMapping = {
   replacementParts: 'rp', operator: 'op'
 };
 
+// =============================================================
+// IndexedDB Template Storage (works on GitHub Pages / offline)
+// Stores the Excel template file as ArrayBuffer in the browser.
+// No server required.
+// =============================================================
+const templateStore = {
+  DB_NAME: 'rkv_template_db',
+  STORE: 'templates',
+  KEY: 'excel_template',
+  META_KEY: 'excel_template_meta',
+
+  _open() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(this.DB_NAME, 1);
+      req.onupgradeneeded = (e) => {
+        e.target.result.createObjectStore(this.STORE);
+      };
+      req.onsuccess = (e) => resolve(e.target.result);
+      req.onerror = (e) => reject(e.target.error);
+    });
+  },
+
+  async save(arrayBuffer, meta) {
+    const db = await this._open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.STORE, 'readwrite');
+      const store = tx.objectStore(this.STORE);
+      store.put(arrayBuffer, this.KEY);
+      store.put(meta, this.META_KEY);
+      tx.oncomplete = resolve;
+      tx.onerror = (e) => reject(e.target.error);
+    });
+  },
+
+  async load() {
+    const db = await this._open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.STORE, 'readonly');
+      const req = tx.objectStore(this.STORE).get(this.KEY);
+      req.onsuccess = (e) => resolve(e.target.result || null);
+      req.onerror = (e) => reject(e.target.error);
+    });
+  },
+
+  async loadMeta() {
+    const db = await this._open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.STORE, 'readonly');
+      const req = tx.objectStore(this.STORE).get(this.META_KEY);
+      req.onsuccess = (e) => resolve(e.target.result || null);
+      req.onerror = (e) => reject(e.target.error);
+    });
+  },
+
+  async remove() {
+    const db = await this._open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.STORE, 'readwrite');
+      const store = tx.objectStore(this.STORE);
+      store.delete(this.KEY);
+      store.delete(this.META_KEY);
+      tx.oncomplete = resolve;
+      tx.onerror = (e) => reject(e.target.error);
+    });
+  }
+};
+
 // State Manager
 const state = {
   isStaticMode: false,
@@ -726,14 +793,10 @@ async function handleExcelExport() {
   const placeholders = buildPlaceholderMap(data);
   const safeReportNo = data.reportNo.replace(/[^a-zA-Z0-9_-]/g, '_');
 
-  // ---- Try template-based export first ----
+  // ---- Try template-based export first (IndexedDB – works on GitHub Pages) ----
   try {
-    const resp = await fetch('/api/template', {
-      headers: { 'x-admin-key': state.adminKey }
-    });
-
-    if (resp.ok) {
-      const arrayBuffer = await resp.arrayBuffer();
+    const arrayBuffer = await templateStore.load();
+    if (arrayBuffer) {
       const wb = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true, cellFormula: true });
       fillTemplatePlaceholders(wb, placeholders);
       XLSX.writeFile(wb, `RIKEN_Report_${safeReportNo}.xlsx`);
@@ -741,8 +804,7 @@ async function handleExcelExport() {
       return;
     }
   } catch (err) {
-    // If network error or no template, fall through to built-in export
-    console.warn('Template fetch failed, using built-in export:', err);
+    console.warn('Template load from browser failed, using built-in export:', err);
   }
 
   // ---- Fallback: built-in generated sheet ----
@@ -1071,57 +1133,48 @@ function setupEventListeners() {
     window.print();
   });
 
-  // ---- Template Upload Events ----
+  // ---- Template Upload Events (IndexedDB – works on GitHub Pages) ----
   if (elements.templateFileInput) {
     elements.templateFileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
+      if (!file.name.toLowerCase().endsWith('.xlsx')) {
+        showToast('Chỉ chấp nhận file .xlsx', 'error');
+        e.target.value = '';
+        return;
+      }
 
-      const formData = new FormData();
-      formData.append('template', file);
-
-      const label = elements.templateUploadLabel;
-      if (label) label.textContent = 'Đang tải lên...';
+      const span = elements.templateUploadLabel && elements.templateUploadLabel.querySelector('span');
+      if (span) span.textContent = 'Đang lưu...';
 
       try {
-        const resp = await fetch('/api/template', {
-          method: 'POST',
-          headers: { 'x-admin-key': state.adminKey },
-          body: formData
-        });
-        const result = await resp.json();
-        if (result.success) {
-          showToast('Template đã được upload thành công! ✅');
-          checkTemplateStatus();
-        } else {
-          showToast(result.error || 'Lỗi khi upload template', 'error');
-        }
+        const arrayBuffer = await file.arrayBuffer();
+        const meta = {
+          name: file.name,
+          size: file.size,
+          updatedAt: new Date().toISOString()
+        };
+        await templateStore.save(arrayBuffer, meta);
+        showToast(`Template "${file.name}" đã lưu vào trình duyệt! ✅`);
+        checkTemplateStatus();
       } catch (err) {
-        showToast('Không thể kết nối server khi upload', 'error');
+        showToast('Lỗi khi lưu template vào trình duyệt', 'error');
+        console.error(err);
       } finally {
         e.target.value = '';
-        if (label) label.textContent = 'Thay thế Template';
       }
     });
   }
 
   if (elements.templateDeleteBtn) {
     elements.templateDeleteBtn.addEventListener('click', async () => {
-      if (!confirm('Bạn có chắc muốn xoá file template hiện tại không?')) return;
+      if (!confirm('Bạn có chắc muốn xoá file template đã lưu không?')) return;
       try {
-        const resp = await fetch('/api/template', {
-          method: 'DELETE',
-          headers: { 'x-admin-key': state.adminKey }
-        });
-        const result = await resp.json();
-        if (result.success) {
-          showToast('Template đã được xoá.');
-          checkTemplateStatus();
-        } else {
-          showToast(result.error || 'Lỗi xoá template', 'error');
-        }
+        await templateStore.remove();
+        showToast('Template đã được xoá.');
+        checkTemplateStatus();
       } catch (err) {
-        showToast('Không thể kết nối server', 'error');
+        showToast('Lỗi khi xoá template', 'error');
       }
     });
   }
@@ -1145,26 +1198,22 @@ function setupEventListeners() {
 async function checkTemplateStatus() {
   if (!elements.templateStatusText) return;
   try {
-    const resp = await fetch('/api/template/info', {
-      headers: { 'x-admin-key': state.adminKey }
-    });
-    const result = await resp.json();
-    if (result.success && result.exists) {
-      const kb = Math.round(result.size / 1024);
-      const updated = new Date(result.updatedAt).toLocaleString('vi-VN');
-      elements.templateStatusText.textContent = `✅ Template: excel_template.xlsx (${kb} KB) – Cập nhật: ${updated}`;
+    const meta = await templateStore.loadMeta();
+    if (meta) {
+      const kb = Math.round(meta.size / 1024);
+      const updated = new Date(meta.updatedAt).toLocaleString('vi-VN');
+      elements.templateStatusText.textContent = `✅ Template: ${meta.name} (${kb} KB) – Tải lên: ${updated}`;
       if (elements.templateDeleteBtn) elements.templateDeleteBtn.classList.remove('hidden');
-      if (elements.templateUploadLabel) elements.templateUploadLabel.querySelector('span') && (elements.templateUploadLabel.querySelector('span').textContent = 'Thay thế Template');
+      const span = elements.templateUploadLabel && elements.templateUploadLabel.querySelector('span');
+      if (span) span.textContent = 'Thay thế Template';
     } else {
       elements.templateStatusText.textContent = 'Chưa có template. Hãy tải lên file Excel mẫu (.xlsx).';
       if (elements.templateDeleteBtn) elements.templateDeleteBtn.classList.add('hidden');
-      if (elements.templateUploadLabel) {
-        const span = elements.templateUploadLabel.querySelector('span');
-        if (span) span.textContent = 'Tải lên Template';
-      }
+      const span = elements.templateUploadLabel && elements.templateUploadLabel.querySelector('span');
+      if (span) span.textContent = 'Tải lên Template';
     }
   } catch (err) {
-    // Silently ignore if not admin or server error
+    console.warn('checkTemplateStatus error:', err);
   }
 }
 
