@@ -18,11 +18,11 @@
   --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   --accent-glow: rgba(99, 102, 241, 0.25);
   
-  /* Certificate Sheet Colors */
-  --cert-header-bg: #1e5170; /* Teal/dark blue like the screenshot */
-  --cert-label-bg: #eaeff2;
-  --cert-value-bg: #ffffff;
-  --cert-border-color: #abbbcf;
+  /* Riken Viet Document Sheet Styling */
+  --riken-blue: #0033a0;
+  --riken-blue-light: #e0e9fa;
+  --riken-border-color: #0033a0;
+  --riken-bg-white: #ffffff;
   
   --danger-color: #ef4444;
   --danger-bg: rgba(239, 68, 68, 0.1);
@@ -293,7 +293,7 @@ button:disabled {
   height: 0.9rem;
 }
 
-.preview-text-btn, .reset-text-btn {
+.reset-text-btn {
   background: transparent;
   color: var(--accent-color);
   font-size: 0.8rem;
@@ -303,7 +303,7 @@ button:disabled {
   text-underline-offset: 2px;
 }
 
-.preview-text-btn:hover, .reset-text-btn:hover {
+.reset-text-btn:hover {
   color: var(--border-focus);
 }
 
@@ -343,12 +343,8 @@ button:disabled {
   height: 1.05rem;
 }
 
-.tab-content.hidden {
-  display: none !important;
-}
-
 /* ------------------------------------------------------------- */
-/* 1. LOGIN VIEW STYLING */
+/* LOGIN VIEW STYLING */
 /* ------------------------------------------------------------- */
 .login-view-container {
   display: flex;
@@ -392,7 +388,7 @@ button:disabled {
   margin-bottom: 1.25rem;
 }
 
-input[type="text"], input[type="password"] {
+input[type="text"], input[type="password"], textarea {
   background: var(--bg-secondary);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
@@ -404,7 +400,7 @@ input[type="text"], input[type="password"] {
   transition: all var(--transition-fast);
 }
 
-input[type="text"]:focus, input[type="password"]:focus {
+input[type="text"]:focus, input[type="password"]:focus, textarea:focus {
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
@@ -417,118 +413,224 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 /* ------------------------------------------------------------- */
-/* 2. ADMIN PORTAL VIEW STYLING */
+/* ADMIN PORTAL VIEW STYLING */
 /* ------------------------------------------------------------- */
 .admin-grid-layout {
   display: grid;
-  grid-template-columns: 1.35fr 0.65fr;
+  grid-template-columns: 1.4fr 0.6fr;
   gap: 1.5rem;
   align-items: start;
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1050px) {
   .admin-grid-layout {
     grid-template-columns: 1fr;
   }
 }
 
 .card-form {
-  padding: 1.25rem;
+  padding: 1.5rem;
 }
 
 .form-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border-glass);
 }
 
-/* Simulated Calibration Table Form */
-.cert-grid-form {
-  display: grid;
-  grid-template-columns: 140px 1fr 140px 1fr;
-  background-color: var(--cert-border-color);
-  border: 1px solid var(--cert-border-color);
-  gap: 1px;
+/* Page Section Tabs inside Form */
+.form-section-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  background: var(--bg-primary);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-glass);
 }
 
-@media (max-width: 680px) {
-  .cert-grid-form {
+.form-sec-btn {
+  flex: 1;
+  padding: 0.55rem 0.5rem;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: calc(var(--radius-md) - 2px);
+}
+
+.form-sec-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background: var(--bg-glass);
+}
+
+.form-sec-btn.active {
+  background: var(--accent-gradient);
+  color: #ffffff;
+}
+
+/* Editor form groups */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section-title {
+  font-family: var(--font-header);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin-bottom: 0.25rem;
+  letter-spacing: 0.05em;
+  border-left: 3px solid var(--accent-color);
+  padding-left: 0.5rem;
+}
+
+.sub-sec-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0.5rem;
+  border-bottom: 1px dashed var(--border-glass);
+  padding-bottom: 0.25rem;
+}
+
+.grid-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.grid-form-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.grid-2-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 600px) {
+  .grid-2-col {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Table editors inside Form */
+.gas-table-editor, .sensors-results-editor {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-glass);
+  margin-bottom: 0.5rem;
+}
+
+.editor-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.editor-table th, .editor-table td {
+  border: 1px solid var(--border-glass);
+  padding: 0.4rem 0.5rem;
+}
+
+.editor-table th {
+  background-color: var(--bg-secondary);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.editor-table td input[type="text"] {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+}
+
+.editor-table td input[type="text"]:focus {
+  border-color: var(--border-focus);
+}
+
+.nested-grid-table th {
+  text-align: center;
+}
+
+.nested-grid-table td {
+  padding: 0.25rem;
+}
+
+.nested-grid-table .cell-header {
+  background-color: var(--bg-secondary);
+  font-weight: 700;
+  font-size: 0.75rem;
+  width: 120px;
+}
+
+/* Ranges layout inside form */
+.cert-grid-form.mini-form {
+  display: grid;
+  grid-template-columns: 100px 1fr 100px 1fr;
+  background-color: var(--border-glass);
+  border: 1px solid var(--border-glass);
+  gap: 1px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .cert-grid-form.mini-form {
     grid-template-columns: 1fr;
   }
 }
 
-.grid-cell {
-  padding: 0.4rem 0.6rem;
-  display: flex;
-  align-items: center;
+.mini-form .grid-cell {
+  padding: 0.35rem 0.5rem;
 }
 
-.label-cell {
-  background-color: var(--cert-label-bg);
-  font-size: 0.75rem;
+.mini-form .label-cell {
+  background-color: var(--bg-secondary);
+  font-size: 0.7rem;
   font-weight: 700;
-  color: #334155;
-  line-height: 1.3;
+  color: var(--text-secondary);
 }
 
-.val-cell {
-  background-color: var(--cert-value-bg);
+.mini-form .val-cell {
+  background-color: var(--bg-primary);
 }
 
-.cert-grid-form input[type="text"] {
-  width: 100%;
-  height: 100%;
+.mini-form input[type="text"] {
   border: none;
   background: transparent;
-  padding: 0.2rem 0;
-  color: #0f172a;
-  font-size: 0.8rem;
-  font-weight: 500;
-  border-radius: 0;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  width: 100%;
 }
 
-.cert-grid-form input[type="text"]:focus {
-  box-shadow: none;
+.mini-form input[type="text"]:focus {
   outline: none;
-  background: rgba(99, 102, 241, 0.05);
-}
-
-/* Light/Dark adjustment inside sheet cells for readable inputs */
-[data-theme="dark"] .cert-grid-form {
-  /* Keep standard sheet appearance for the form so it is an accurate preview */
-  --cert-label-bg: #1e293b;
-  --cert-value-bg: #0f172a;
-  --cert-border-color: #334155;
-}
-
-[data-theme="dark"] .cert-grid-form input[type="text"] {
-  color: #f8fafc;
-}
-
-[data-theme="dark"] .label-cell {
-  color: #94a3b8;
 }
 
 .form-actions-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 1.25rem;
-}
-
-.submit-btn {
-  width: 100%;
-  max-width: 320px;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.95rem;
-}
-
-@media (max-width: 600px) {
-  .submit-btn {
-    max-width: 100%;
-  }
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-glass);
 }
 
 /* QR Code Display & Customizer in Admin Tab */
@@ -815,7 +917,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 .actions-col {
   text-align: right;
-  width: 160px;
+  width: 180px;
 }
 
 .lib-action-buttons {
@@ -831,10 +933,10 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 /* ------------------------------------------------------------- */
-/* 3. PUBLIC VIEW PAGE (CERTIFICATE RENDER) STYLING */
+/* PUBLIC VIEW PAGE (RIKEN VIET REPORT CARD) STYLING */
 /* ------------------------------------------------------------- */
 .public-view-container {
-  max-width: 1000px;
+  max-width: 820px; /* Exact size for paper layout */
   margin: 1rem auto;
   padding: 0 0.5rem;
 }
@@ -868,101 +970,455 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 .public-cert-card {
-  background: #ffffff; /* Sheet card background is always white */
-  color: #0f172a;
+  background: var(--riken-bg-white);
+  color: #000000;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
-  padding: 1.5rem;
-  border: 1px solid #cbd5e1;
+  padding: 2rem;
+  border: 1.5px solid #cbd5e1;
 }
 
-.cert-table-wrapper {
-  overflow-x: auto;
-}
-
-/* Calibration Sheet Table - Matching Image Styling */
-.calibration-sheet-table {
-  width: 100%;
-  border-collapse: collapse;
-  border: 2px solid var(--cert-border-color, #abbbcf);
-  font-family: Arial, Helvetica, sans-serif;
+/* Selector Tabs for Page 1 / Page 2 */
+.public-view-tabs {
+  display: flex;
+  gap: 0.5rem;
   margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--riken-blue);
+  padding-bottom: 0.5rem;
 }
 
-.sheet-title-header {
-  background-color: var(--cert-header-bg, #1e5170);
-  color: #ffffff !important;
-  font-size: 0.95rem;
+.pub-tab-btn {
+  padding: 0.6rem 1.2rem;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+}
+
+.pub-tab-btn:hover:not(.active) {
+  background: #f1f5f9;
+  color: var(--riken-blue);
+}
+
+.pub-tab-btn.active {
+  background: var(--riken-blue);
+  color: #ffffff;
   font-weight: 700;
-  text-align: center;
-  padding: 10px;
-  border: 2px solid var(--cert-border-color, #abbbcf);
-  letter-spacing: 0.05em;
 }
 
-.calibration-sheet-table td {
-  border: 1px solid var(--cert-border-color, #abbbcf);
-  padding: 6px 10px;
-  vertical-align: middle;
+/* Page 1 / Page 2 Containers */
+.riken-cert-page {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #000000;
+  background: #ffffff;
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Page 1: Letterhead table header */
+.riken-header-table {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  border: 1px solid var(--riken-border-color);
+  margin-bottom: 1rem;
+}
+
+.riken-header-logo-cell {
+  border-right: 1px solid var(--riken-border-color);
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+}
+
+.riken-logo-text-label {
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: var(--riken-blue);
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+}
+
+.riken-header-info-cell {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.riken-comp-name {
+  color: var(--riken-blue);
+  font-size: 0.95rem;
+  font-weight: bold;
+  margin-bottom: 0.15rem;
+  text-align: center;
+}
+
+.riken-comp-web {
+  font-size: 0.7rem;
+  color: #475569;
+  text-align: center;
+  margin-bottom: 0.4rem;
+}
+
+.riken-comp-branch-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  font-size: 0.55rem;
+  color: #334155;
+  border-top: 1px solid #cbd5e1;
+  padding-top: 0.4rem;
+}
+
+.branch-col {
   line-height: 1.3;
 }
 
-.sheet-label {
-  background-color: var(--cert-label-bg, #eaeff2);
-  width: 160px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #334155;
+/* Titles */
+.riken-title-section {
+  text-align: center;
+  margin-bottom: 1rem;
 }
 
-.sheet-value {
-  background-color: var(--cert-value-bg, #ffffff);
+.riken-main-title {
+  color: var(--riken-blue);
+  font-size: 1.3rem;
+  font-weight: 900;
+  margin-bottom: 0.1rem;
+}
+
+.riken-sub-title {
+  color: var(--riken-blue);
+  font-size: 1rem;
+  font-weight: bold;
+  font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+.riken-report-no {
   font-size: 0.8rem;
-  color: #0f172a;
+  color: #000000;
+}
+
+/* General report tables */
+.riken-report-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1.5px solid var(--riken-border-color);
+  font-size: 0.78rem;
+  margin-bottom: 1rem;
+}
+
+.riken-report-table td {
+  border: 1px solid var(--riken-border-color);
+  padding: 6px 10px;
+  vertical-align: middle;
+}
+
+.riken-report-table em {
+  font-style: italic;
+  color: #475569;
+}
+
+/* Nested inner spec tables */
+.inner-spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.inner-spec-table th {
+  text-align: left;
+  padding: 4px 6px;
+  background-color: #f8fafc;
+  font-weight: bold;
+}
+
+.inner-spec-table td {
+  padding: 3px 6px !important;
+}
+
+.nested-cell-container {
+  vertical-align: top !important;
+  padding: 0 !important;
+}
+
+/* Standard Gases subtable */
+.sub-table-title {
+  font-weight: bold;
+  padding: 6px 10px 4px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid var(--riken-border-color);
+}
+
+.no-pad-cell {
+  padding: 0 !important;
+}
+
+.gas-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gas-detail-table th, .gas-detail-table td {
+  border: none !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 5px 10px !important;
+  font-size: 0.72rem;
+}
+
+.gas-detail-table th {
+  background-color: #f1f5f9;
+  font-weight: bold;
+  text-align: left;
+}
+
+.gas-detail-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Environment condition / Re-adjustment due font sizing */
+.text-bold {
+  font-weight: bold !important;
+}
+
+/* Signature & Date blocks */
+.riken-signature-section {
+  align-self: flex-end;
+  width: 320px;
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-size: 0.78rem;
+  background: transparent;
+}
+
+.sig-place-date {
+  font-style: italic;
+  margin-bottom: 0.4rem;
+}
+
+.sig-title {
+  font-weight: bold;
+}
+
+.sig-title-eng {
+  font-style: italic;
+  color: #475569;
+  margin-bottom: 0.5rem;
+}
+
+/* Digital Signature Badge (gorgeous stamp design) */
+.digital-signature-badge {
+  border: 2px solid #0284c7;
+  background: #f0f9ff;
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.5rem 0;
+  width: 230px;
+  box-shadow: 0 2px 4px rgba(2, 132, 199, 0.08);
+}
+
+.badge-border-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stamp-tick {
+  width: 1.3rem;
+  height: 1.3rem;
+  background: #0284c7;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stamp-tick svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.stamp-text-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.25;
+}
+
+.stamp-status {
+  font-weight: 800;
+  color: #0284c7;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.stamp-org {
+  font-size: 0.6rem;
+  color: #0369a1;
   font-weight: 500;
 }
 
-.eng-sub {
-  font-size: 0.7rem;
-  color: #64748b;
-  font-weight: normal;
-  font-style: italic;
+.sig-name {
+  font-weight: bold;
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-.text-bold {
-  font-weight: 700 !important;
+/* Bottom Footer Notice in Sheet */
+.riken-page-footer {
+  border-top: 1px solid var(--riken-border-color);
+  margin-top: auto;
+  padding-top: 0.4rem;
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  font-size: 0.6rem;
+  color: var(--riken-blue);
+  line-height: 1.3;
+}
+
+.footer-page-num {
+  font-weight: bold;
+}
+
+.footer-notice {
+  text-align: justify;
+}
+
+/* PAGE 2 SPECIFIC READ-ONLY STYLING */
+.p2-header {
+  margin-bottom: 0.75rem;
+}
+
+.p2-device-summary {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  border: 1px solid var(--riken-border-color);
+  padding: 8px 12px;
+  background-color: #f8fafc;
+  margin-bottom: 0.75rem;
+}
+
+.grid-2-col-text {
+  display: flex;
+  justify-content: space-between;
+  margin: 2px 0;
+}
+
+.p2-results-list {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.results-heading {
+  font-weight: bold;
+  text-decoration: underline;
+  margin-bottom: 0.25rem;
+}
+
+.p2-table-wrapper {
+  margin-bottom: 0.75rem;
+}
+
+.p2-table-subtitle {
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.results-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1.5px solid var(--riken-border-color);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.results-detail-table th, .results-detail-table td {
+  border: 1px solid var(--riken-border-color);
+  padding: 5px 6px;
+  vertical-align: middle;
+}
+
+.results-detail-table th {
+  background-color: #f1f5f9;
+  font-weight: bold;
+}
+
+.results-detail-table td.row-header {
+  background-color: #f8fafc;
+  font-weight: bold;
+  text-align: left;
+  font-size: 0.7rem;
+}
+
+.results-detail-table td.side-header {
+  background-color: #f1f5f9;
+}
+
+.replacement-parts-block {
+  font-size: 0.72rem;
+  border: 1px solid var(--riken-border-color);
+  border-radius: 4px;
+  padding: 6px 10px;
+  background-color: #f8fafc;
+  margin-bottom: 0.5rem;
+}
+
+.parts-title {
+  font-weight: bold;
+  margin-bottom: 0.2rem;
+}
+
+.parts-list-content {
+  line-height: 1.35;
+  white-space: pre-line;
 }
 
 .public-actions-row {
   display: flex;
   justify-content: center;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
-/* Light/Dark page adjustments - Keep sheet color constant on read views */
-[data-theme="dark"] .public-cert-card {
-  background: #ffffff;
-  color: #0f172a;
-  border-color: #334155;
+/* Light/Dark adjustments - Keep document background constant */
+[data-theme="dark"] .public-cert-card, [data-theme="dark"] .riken-cert-page {
+  background: #ffffff !important;
+  color: #000000 !important;
 }
 
-[data-theme="dark"] .calibration-sheet-table {
-  --cert-header-bg: #1e5170;
-  --cert-label-bg: #eaeff2;
-  --cert-value-bg: #ffffff;
-  --cert-border-color: #abbbcf;
+[data-theme="dark"] .riken-header-logo-cell, [data-theme="dark"] .riken-logo-graphics {
+  background: #ffffff !important;
 }
 
-[data-theme="dark"] .sheet-label {
-  color: #334155;
+[data-theme="dark"] .riken-comp-branch-grid, [data-theme="dark"] .branch-col, [data-theme="dark"] .riken-comp-web {
+  color: #334155 !important;
 }
 
-[data-theme="dark"] .sheet-value {
-  color: #0f172a;
+[data-theme="dark"] .p2-device-summary, [data-theme="dark"] .replacement-parts-block {
+  background-color: #f8fafc !important;
+  color: #000000 !important;
 }
 
-[data-theme="dark"] .eng-sub {
-  color: #64748b;
+[data-theme="dark"] .editor-table td input[type="text"] {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
 }
 
 /* Toast System */
@@ -1023,7 +1479,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 }
 
 @media print {
-  .no-print, header, .tabs-container, .panel-form-container, .panel-qr-container, .card-library-full, .public-actions-row, .app-footer, .bg-blur {
+  .no-print, header, .tabs-container, .panel-form-container, .panel-qr-container, .card-library-full, .public-actions-row, .app-footer, .bg-blur, .public-view-tabs {
     display: none !important;
   }
   
@@ -1069,7 +1525,7 @@ input[type="text"]:focus, input[type="password"]:focus {
   
   .print-title {
     font-family: Arial, sans-serif;
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: black;
     margin-bottom: 1.25rem;
@@ -1102,7 +1558,7 @@ input[type="text"]:focus, input[type="password"]:focus {
     color: black;
   }
 
-  /* Public View Page Printing layout */
+  /* Print certificate pages */
   #public-view {
     display: block !important;
     width: 100% !important;
@@ -1123,36 +1579,60 @@ input[type="text"]:focus, input[type="password"]:focus {
     background: white !important;
   }
 
-  .calibration-sheet-table {
-    width: 100% !important;
-    border: 2px solid #000000 !important;
+  /* Force both pages to display when printing so they both print */
+  .riken-cert-page {
+    display: flex !important;
+    visibility: visible !important;
+    page-break-after: always !important;
+    margin-bottom: 2cm !important;
   }
 
-  .sheet-title-header {
-    background-color: #1e5170 !important;
+  .riken-cert-page:last-child {
+    page-break-after: avoid !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Keep colors when printing */
+  .riken-comp-name, .riken-main-title, .riken-sub-title, .riken-logo-text-label {
+    color: #0033a0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  .riken-logo-graphics path, .riken-logo-graphics circle {
+    fill: #0033a0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .riken-report-table, .gas-detail-table th, .results-detail-table th {
+    border-color: #0033a0 !important;
+  }
+
+  .digital-signature-badge {
+    border-color: #0284c7 !important;
+    background-color: #f0f9ff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .stamp-tick {
+    background-color: #0284c7 !important;
     color: white !important;
-  }
-
-  .sheet-label {
-    background-color: #eaeff2 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    color: black !important;
-    border: 1px solid #000000 !important;
   }
 
-  .sheet-value {
-    background-color: #ffffff !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    color: black !important;
-    border: 1px solid #000000 !important;
+  .stamp-status {
+    color: #0284c7 !important;
+  }
+
+  .stamp-org {
+    color: #0369a1 !important;
   }
 }
 
-/* Utilities */
+/* Utility classes */
 .hidden {
   display: none !important;
 }

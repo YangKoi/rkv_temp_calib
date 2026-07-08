@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="vi" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RKV Calibration Certificate Hub</title>
+  <title>Riken Viet - Giấy Chứng Nhận Hiệu Chỉnh</title>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
-  <!-- QR Code Generator Library (Local Offline Copy) -->
+  <!-- Offline Libraries (No CDN dependency for 100% offline support) -->
   <script src="qrcode.min.js"></script>
+  <script src="xlsx.full.min.js"></script>
 </head>
 <body>
   <!-- Background Decorative Blurs -->
@@ -20,440 +21,910 @@
 
   <div class="app-container">
     <!-- Header -->
-    <header class="app-header">
+    <header class="app-header no-print">
       <div class="header-logo">
-        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M8 12H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M12 8L16 12L12 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+          <path d="M12 6v6l4 2"></path>
         </svg>
         <div class="logo-text">
-          <h1>RKV Calibration</h1>
-          <span>Certificate Gateway</span>
+          <h1>RIKEN VIET</h1>
+          <span>Adjustment Report Hub</span>
         </div>
       </div>
       <div class="header-actions">
-        <!-- Theme Toggle -->
-        <button id="theme-toggle" class="icon-btn" aria-label="Toggle Theme">
-          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M22 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M4 12H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M12 2V4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M12 20V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M19.07 4.93L17.66 6.34" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M6.34 17.66L4.93 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M4.93 4.93L6.34 6.34" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M17.66 17.66L19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <button id="theme-toggle" class="icon-btn" title="Chuyển chế độ Sáng/Tối">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.72" x2="5.64" y2="18.3"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
           </svg>
         </button>
-
-        <!-- Admin Logout -->
-        <button id="logout-btn" class="secondary-btn hidden">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-          <span>Đăng xuất</span>
-        </button>
+        <button id="logout-btn" class="outline-btn hidden">Đăng xuất</button>
       </div>
     </header>
 
-    <!-- ------------------------------------------------------------- -->
-    <!-- 1. LOGIN VIEW -->
-    <!-- ------------------------------------------------------------- -->
-    <div id="login-view" class="login-view-container">
-      <div class="card card-login">
-        <div class="login-header">
-          <h2>Hệ Thống Quản Trị RKV</h2>
-          <p>Nhập tài khoản để tạo và quản lý chứng chỉ đo lường</p>
-        </div>
-        <form id="login-form">
-          <div class="form-group">
-            <label for="login-username" class="field-label">Tài khoản</label>
-            <input type="text" id="login-username" placeholder="Nhập tài khoản (rkvcalib)" required autocomplete="username"/>
+    <!-- Main Content Area -->
+    <main class="app-main">
+      
+      <!-- ------------------------------------------------------------- -->
+      <!-- 1. LOGIN VIEW -->
+      <!-- ------------------------------------------------------------- -->
+      <div id="login-view" class="login-view-container">
+        <div class="card card-login">
+          <div class="login-header">
+            <h2>Hệ thống Chứng chỉ RKV</h2>
+            <p>Vui lòng đăng nhập tài khoản quản trị viên</p>
           </div>
-          <div class="form-group">
-            <label for="login-password" class="field-label">Mật khẩu</label>
-            <input type="password" id="login-password" placeholder="Nhập mật khẩu (7179)" required autocomplete="current-password"/>
-          </div>
-          <button type="submit" class="primary-btn login-submit-btn">Đăng Nhập</button>
-        </form>
-      </div>
-    </div>
-
-    <!-- ------------------------------------------------------------- -->
-    <!-- 2. ADMIN PORTAL VIEW -->
-    <!-- ------------------------------------------------------------- -->
-    <div id="admin-view" class="admin-view-container hidden">
-      <!-- Portal Tabs -->
-      <div class="tabs-container">
-        <button class="tab-btn active" data-tab="create">
-          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="12" y1="18" x2="12" y2="12"></line>
-            <line x1="9" y1="15" x2="15" y2="15"></line>
-          </svg>
-          <span>Tạo Chứng Chỉ Mới</span>
-        </button>
-        <button class="tab-btn" data-tab="library">
-          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
-          <span>Thư Viện Mã QR</span>
-        </button>
-      </div>
-
-      <!-- Tab: Create Certificate -->
-      <div id="tab-create" class="tab-content">
-        <div class="admin-grid-layout">
-          
-          <!-- Left side: Interactive form styled like the certificate -->
-          <div class="panel-form-container">
-            <div class="card card-form">
-              <div class="form-header-row">
-                <h2>Bảng Nhập Dữ Liệu Chứng Chỉ</h2>
-                <button id="clear-form-btn" class="reset-text-btn">Xóa trống form</button>
-              </div>
-              
-              <!-- Calibration Form grid simulating the 4 column sheet layout -->
-              <form id="cert-form" class="cert-grid-form">
-                <!-- Row 1 -->
-                <div class="grid-cell label-cell"><label for="inp-object">Đối tượng (Object):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-object" placeholder="Phương tiện đo nồng độ khí NH3..." required /></div>
-                <div class="grid-cell label-cell"><label for="inp-code">Mã KH (Code):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-code" placeholder="KH1700" required /></div>
-                
-                <!-- Row 2 -->
-                <div class="grid-cell label-cell"><label for="inp-type">Kiểu (Type):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-type" placeholder="SENSEPOINT XCD RTD" required /></div>
-                <div class="grid-cell label-cell"><label for="inp-serial">Số hiệu (Serial):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-serial" placeholder="401537 1051 0060" required /></div>
-                
-                <!-- Row 3 -->
-                <div class="grid-cell label-cell"><label for="inp-manufacture">CSSX (Manufacture):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-manufacture" placeholder="HONEYWELL" required /></div>
-                <div class="grid-cell label-cell"><label for="inp-range">Phạm vi đo (Range):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-range" placeholder="0 ÷ 100 ppm" required /></div>
-                
-                <!-- Row 4 -->
-                <div class="grid-cell label-cell"><label for="inp-resolution">Độ phân giải (Resolution):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-resolution" placeholder="1 ppm" required /></div>
-                <div class="grid-cell label-cell"><label for="inp-tag">Mã quản lý (Tag No):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-tag" placeholder="04GT-5014" required /></div>
-                
-                <!-- Row 5 -->
-                <div class="grid-cell label-cell"><label for="inp-cer">Số GCN (Cer Nº):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-cer" placeholder="C24.39466" required /></div>
-                <div class="grid-cell label-cell"><label for="inp-stamp">Số tem (Stamp Nº):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-stamp" placeholder="23C08095" required /></div>
-                
-                <!-- Row 6 -->
-                <div class="grid-cell label-cell"><label for="inp-method">Quy trình (Method):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-method" placeholder="ETV.MCA 02" required /></div>
-                <div class="grid-cell label-cell"><label for="inp-valid">Thời hạn (Valid until):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-valid" placeholder="31-10-2025" required /></div>
-                
-                <!-- Row 7 -->
-                <div class="grid-cell label-cell"><label for="inp-customer">Cơ sở sử dụng (Customer):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-customer" placeholder="CÔNG TY CỔ PHẦN PHÂN BÓN DẦU..." required /></div>
-                <div class="grid-cell label-cell"><label for="inp-address">Địa chỉ (Address):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-address" placeholder="Lô D, Khu Công nghiệp..." required /></div>
-                
-                <!-- Row 8 -->
-                <div class="grid-cell label-cell"><label for="inp-place">Nơi sử dụng (Place):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-place" placeholder="Nhà máy Đạm Cà Mau..." required /></div>
-                <div class="grid-cell label-cell"><label for="inp-conclusion">Kết luận (Conclusion):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-conclusion" placeholder="Đạt / N/A" required /></div>
-                
-                <!-- Row 9 -->
-                <div class="grid-cell label-cell"><label for="inp-executed">Người thực hiện (Executed by):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-executed" placeholder="Nguyễn Văn Huy" required /></div>
-                <div class="grid-cell label-cell"><label for="inp-d-execution">Ngày thực hiện (Date of Execution):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-d-execution" placeholder="11:18 12/11/2024" required /></div>
-                
-                <!-- Row 10 -->
-                <div class="grid-cell label-cell"><label for="inp-inspector">Người soát xét (Inspector by):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-inspector" placeholder="Nguyễn Ngọc Tuấn" required /></div>
-                <div class="grid-cell label-cell"><label for="inp-d-inspector">Ngày soát xét (Date of Inspector):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-d-inspector" placeholder="11:04 13/11/2024" required /></div>
-                
-                <!-- Row 11 -->
-                <div class="grid-cell label-cell"><label for="inp-approve">Người phê duyệt (Approve by):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-approve" placeholder="Nguyễn Hoàng Giang" required /></div>
-                <div class="grid-cell label-cell"><label for="inp-d-issue">Ngày phê duyệt (Date of Issue):</label></div>
-                <div class="grid-cell val-cell"><input type="text" id="inp-d-issue" placeholder="15:54 13/11/2024" required /></div>
-              </form>
-              <div class="form-actions-row">
-                <button type="button" id="submit-cert-btn" class="primary-btn submit-btn">Xuất Mã QR & Lưu Thư Viện</button>
-              </div>
+          <form id="login-form">
+            <div class="form-group">
+              <label for="login-username">Tài khoản</label>
+              <input type="text" id="login-username" required placeholder="Nhập tài khoản" autocomplete="username">
             </div>
-          </div>
-
-          <!-- Right side: QR code preview panel -->
-          <div class="panel-qr-container">
-            <!-- QR code card -->
-            <div class="card card-qr-display">
-              <div class="qr-preview-container">
-                <div id="qr-spinner" class="qr-overlay-spinner hidden">
-                  <div class="spinner"></div>
-                </div>
-                <div class="canvas-wrapper">
-                  <canvas id="qr-canvas"></canvas>
-                </div>
-              </div>
-              
-              <div class="qr-target-info">
-                <div class="target-url-container">
-                  <svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                  </svg>
-                  <span id="qr-target-url" class="target-url">Chưa tạo chứng chỉ</span>
-                </div>
-              </div>
-
-              <div class="qr-actions">
-                <button id="copy-link-btn" class="secondary-btn" disabled>
-                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                  <span>Copy Link</span>
-                </button>
-                <div class="download-dropdown-wrapper">
-                  <button id="download-qr-btn" class="primary-btn" disabled>
-                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="7 10 12 15 17 10"></polyline>
-                      <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    <span>Tải Mã QR</span>
-                  </button>
-                  <div class="download-options">
-                    <button data-format="png">PNG (Hình ảnh)</button>
-                    <button data-format="svg">SVG (Vector)</button>
-                  </div>
-                </div>
-                <button id="print-qr-btn" class="secondary-btn" disabled>
-                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                    <rect x="6" y="14" width="12" height="8"></rect>
-                  </svg>
-                  <span>In Nhãn QR</span>
-                </button>
-              </div>
+            <div class="form-group">
+              <label for="login-password">Mật khẩu</label>
+              <input type="password" id="login-password" required placeholder="Nhập mật khẩu" autocomplete="current-password">
             </div>
-
-            <!-- Customizer controls -->
-            <div class="card card-customizer">
-              <div class="customizer-header">
-                <h2>Tùy Biến QR</h2>
-                <button id="reset-customizer" class="reset-text-btn">Reset</button>
-              </div>
-              <div class="customizer-grid">
-                <div class="color-pickers-row">
-                  <div class="color-picker-wrapper">
-                    <span class="picker-label">Màu QR</span>
-                    <input type="color" id="qr-color-fg" value="#0f172a" />
-                  </div>
-                  <div class="color-picker-wrapper">
-                    <span class="picker-label">Màu Nền</span>
-                    <input type="color" id="qr-color-bg" value="#ffffff" />
-                  </div>
-                </div>
-                <div class="logo-control-row">
-                  <input type="file" id="logo-input" accept="image/*" style="display: none;" />
-                  <button id="upload-logo-btn" class="outline-btn" style="width: 100%;">Chèn Logo</button>
-                  <button id="remove-logo-btn" class="remove-btn hidden">Xóa</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
+            <button type="submit" class="primary-btn login-submit-btn">Đăng Nhập</button>
+          </form>
         </div>
       </div>
 
-      <!-- Tab: Library of QR Codes -->
-      <div id="tab-library" class="tab-content hidden">
-        <div class="card card-library-full">
-          <div class="library-header">
-            <h2>Danh sách Chứng chỉ Đo lường đã tạo</h2>
-            <button id="refresh-library-btn" class="icon-btn" title="Tải lại thư viện">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 4v6h-6"></path>
-                <path d="M1 20v-6h6"></path>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-              </svg>
-            </button>
-          </div>
-
-          <div id="library-loading" class="library-state-msg">
-            <div class="spinner"></div>
-            <span>Đang tải danh sách từ cơ sở dữ liệu...</span>
-          </div>
-
-          <div id="library-empty" class="library-state-msg hidden">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <!-- ------------------------------------------------------------- -->
+      <!-- 2. ADMIN PORTAL VIEW -->
+      <!-- ------------------------------------------------------------- -->
+      <div id="admin-view" class="admin-view-container hidden">
+        
+        <!-- Tab Select buttons -->
+        <div class="tabs-container no-print">
+          <button class="tab-btn active" data-tab="create">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
             </svg>
-            <span>Thư viện trống. Hãy tạo chứng chỉ đầu tiên để bắt đầu lưu trữ.</span>
-          </div>
-
-          <div id="library-table-container" class="library-table-container hidden">
-            <table class="lib-table">
-              <thead>
-                <tr>
-                  <th>Mã chứng chỉ</th>
-                  <th>Số GCN (Cer Nº)</th>
-                  <th>Đối tượng (Object)</th>
-                  <th>Cơ sở sử dụng (Customer)</th>
-                  <th>Ngày tạo</th>
-                  <th class="actions-col">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody id="library-tbody">
-                <!-- Stored rows will go here -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ------------------------------------------------------------- -->
-    <!-- 3. PUBLIC VIEW PAGE (PUBLIC ACCESS SCANNING DISPLAY) -->
-    <!-- ------------------------------------------------------------- -->
-    <div id="public-view" class="public-view-container hidden">
-      <div id="public-view-loading" class="public-loading-box">
-        <div class="spinner"></div>
-        <p>Đang truy xuất thông tin chứng chỉ đo lường...</p>
-      </div>
-
-      <div id="public-view-error" class="public-error-box hidden">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="error-icon">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
-        <h3>Không tìm thấy dữ liệu chứng chỉ</h3>
-        <p>Chứng chỉ này có thể đã bị xóa hoặc liên kết không đúng cấu trúc. Vui lòng quét lại mã QR chính xác.</p>
-      </div>
-
-      <!-- Public read-only certificate table (styled exactly like the user's calibration sheet image) -->
-      <div id="public-cert-card" class="public-cert-card hidden">
-        <div class="cert-table-wrapper">
-          <table class="calibration-sheet-table">
-            <thead>
-              <tr>
-                <th colspan="4" class="sheet-title-header">
-                  CHỨNG CHỈ ĐO LƯỜNG (CERTIFICATION)
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Row 1 -->
-              <tr>
-                <td class="sheet-label">Đối tượng:<br><span class="eng-sub">(Object)</span></td>
-                <td id="lbl-object" class="sheet-value"></td>
-                <td class="sheet-label">Mã KH:<br><span class="eng-sub">(Code)</span></td>
-                <td id="lbl-code" class="sheet-value"></td>
-              </tr>
-              <!-- Row 2 -->
-              <tr>
-                <td class="sheet-label">Kiểu:<br><span class="eng-sub">(Type)</span></td>
-                <td id="lbl-type" class="sheet-value"></td>
-                <td class="sheet-label">Số hiệu:<br><span class="eng-sub">(Serial)</span></td>
-                <td id="lbl-serial" class="sheet-value"></td>
-              </tr>
-              <!-- Row 3 -->
-              <tr>
-                <td class="sheet-label">CSSX:<br><span class="eng-sub">(Manufacture)</span></td>
-                <td id="lbl-manufacture" class="sheet-value"></td>
-                <td class="sheet-label">Phạm vi đo:<br><span class="eng-sub">(Range)</span></td>
-                <td id="lbl-range" class="sheet-value"></td>
-              </tr>
-              <!-- Row 4 -->
-              <tr>
-                <td class="sheet-label">Độ phân giải:<br><span class="eng-sub">(Resolution)</span></td>
-                <td id="lbl-resolution" class="sheet-value"></td>
-                <td class="sheet-label">Mã quản lý:<br><span class="eng-sub">(Tag No)</span></td>
-                <td id="lbl-tag" class="sheet-value"></td>
-              </tr>
-              <!-- Row 5 -->
-              <tr>
-                <td class="sheet-label text-bold">Số GCN:<br><span class="eng-sub">(Cer Nº)</span></td>
-                <td id="lbl-cer" class="sheet-value text-bold"></td>
-                <td class="sheet-label">Số tem:<br><span class="eng-sub">(Stamp Nº)</span></td>
-                <td id="lbl-stamp" class="sheet-value"></td>
-              </tr>
-              <!-- Row 6 -->
-              <tr>
-                <td class="sheet-label">Quy trình:<br><span class="eng-sub">(Method)</span></td>
-                <td id="lbl-method" class="sheet-value"></td>
-                <td class="sheet-label">Thời hạn:<br><span class="eng-sub">(Valid until)</span></td>
-                <td id="lbl-valid" class="sheet-value"></td>
-              </tr>
-              <!-- Row 7 -->
-              <tr>
-                <td class="sheet-label text-bold">Cơ sở sử dụng:<br><span class="eng-sub">(Customer)</span></td>
-                <td id="lbl-customer" class="sheet-value text-bold"></td>
-                <td class="sheet-label">Địa chỉ:<br><span class="eng-sub">(Address)</span></td>
-                <td id="lbl-address" class="sheet-value"></td>
-              </tr>
-              <!-- Row 8 -->
-              <tr>
-                <td class="sheet-label">Nơi sử dụng:<br><span class="eng-sub">(Place)</span></td>
-                <td id="lbl-place" class="sheet-value"></td>
-                <td class="sheet-label text-bold">Kết luận:<br><span class="eng-sub">(Conclusion)</span></td>
-                <td id="lbl-conclusion" class="sheet-value text-bold"></td>
-              </tr>
-              <!-- Row 9 -->
-              <tr>
-                <td class="sheet-label">Người thực hiện:<br><span class="eng-sub">(Executed by)</span></td>
-                <td id="lbl-executed" class="sheet-value"></td>
-                <td class="sheet-label">Ngày thực hiện:<br><span class="eng-sub">(Date of Execution)</span></td>
-                <td id="lbl-d-execution" class="sheet-value"></td>
-              </tr>
-              <!-- Row 10 -->
-              <tr>
-                <td class="sheet-label">Người soát xét:<br><span class="eng-sub">(Inspector by)</span></td>
-                <td id="lbl-inspector" class="sheet-value"></td>
-                <td class="sheet-label">Ngày soát xét:<br><span class="eng-sub">(Date of Inspector)</span></td>
-                <td id="lbl-d-inspector" class="sheet-value"></td>
-              </tr>
-              <!-- Row 11 -->
-              <tr>
-                <td class="sheet-label">Người phê duyệt:<br><span class="eng-sub">(Approve by)</span></td>
-                <td id="lbl-approve" class="sheet-value"></td>
-                <td class="sheet-label">Ngày phê duyệt:<br><span class="eng-sub">(Date of Issue)</span></td>
-                <td id="lbl-d-issue" class="sheet-value"></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <div class="public-actions-row">
-          <button id="btn-print-public-sheet" class="primary-btn">
-            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 6 2 18 2 18 9"></polyline>
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-              <rect x="6" y="14" width="12" height="8"></rect>
+            <span>Tạo Chứng Chỉ Riken</span>
+          </button>
+          <button class="tab-btn" data-tab="library">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
             </svg>
-            <span>In Chứng Chỉ (Print Certificate)</span>
+            <span>Thư Viện Chứng Chỉ</span>
           </button>
         </div>
+
+        <!-- Tab: Create Certificate -->
+        <div id="tab-create" class="tab-content">
+          <div class="admin-grid-layout">
+            
+            <!-- Left side: Interactive form styled like the document pages -->
+            <div class="panel-form-container">
+              <div class="card card-form">
+                <div class="form-header-row">
+                  <h2>Soạn Thảo Chứng Chỉ RIKEN VIET (2 Trang)</h2>
+                  <button id="clear-form-btn" class="reset-text-btn">Xóa trống dữ liệu</button>
+                </div>
+                
+                <form id="cert-form">
+                  <!-- Form Section Selector -->
+                  <div class="form-section-tabs">
+                    <button type="button" class="form-sec-btn active" data-sec="page1">TRANG 1: GIẤY CHỨNG NHẬN</button>
+                    <button type="button" class="form-sec-btn" data-sec="page2">TRANG 2: KẾT QUẢ HIỆU CHỈNH</button>
+                  </div>
+
+                  <!-- ================= PAGE 1 FORM ================= -->
+                  <div id="form-sec-page1" class="form-section">
+                    <h3 class="section-title">THÔNG TIN CHUNG & DẢI ĐO (TRANG 1)</h3>
+                    
+                    <div class="grid-form-group">
+                      <label for="inp-report-no">Giấy CNHC số (Report No.):</label>
+                      <input type="text" id="inp-report-no" placeholder="210C-25_KIEMDINH6" required>
+                    </div>
+
+                    <div class="grid-2-col">
+                      <div class="grid-form-group">
+                        <label for="inp-object">Tên thiết bị (Object):</label>
+                        <input type="text" id="inp-object" placeholder="MÁY ĐO NỒNG ĐỘ KHÍ/ GAS DETECTOR" required>
+                      </div>
+                      <div class="grid-form-group">
+                        <label for="inp-model">Kiểu (Model):</label>
+                        <input type="text" id="inp-model" placeholder="GX-6000" required>
+                      </div>
+                    </div>
+
+                    <div class="grid-2-col">
+                      <div class="grid-form-group">
+                        <label for="inp-serial">Số máy (Serial Number):</label>
+                        <input type="text" id="inp-serial" placeholder="51H0494803-2RN" required>
+                      </div>
+                      <div class="grid-form-group">
+                        <label for="inp-manufacturer">Nơi chế tạo (Manufacturer):</label>
+                        <input type="text" id="inp-manufacturer" placeholder="RIKEN KEIKI - NHẬT BẢN/ RIKEN KEIKI - JAPAN" required>
+                      </div>
+                    </div>
+
+                    <div class="grid-2-col">
+                      <div class="grid-form-group">
+                        <label for="inp-mfg-date">Ngày sản xuất (Mfg. Date):</label>
+                        <input type="text" id="inp-mfg-date" placeholder="12/2017" required>
+                      </div>
+                      <div class="grid-form-group">
+                        <label for="inp-specs">Đặc trưng kỹ thuật (Specifications):</label>
+                        <input type="text" id="inp-specs" placeholder="đo 4 khí HC, CO, H2S, VOC, NO2" required>
+                      </div>
+                    </div>
+
+                    <!-- Ranges and Increments sub-section -->
+                    <h4 class="sub-sec-title">Phạm vi đo (Range) & Độ chia độ (Increment)</h4>
+                    <div class="cert-grid-form mini-form">
+                      <!-- HC -->
+                      <div class="grid-cell label-cell">HC Range</div>
+                      <div class="grid-cell val-cell"><input type="text" id="inp-r-hc" value="0-100 %LEL"></div>
+                      <div class="grid-cell label-cell">HC Increment</div>
+                      <div class="grid-cell val-cell"><input type="text" id="inp-i-hc" value="1 %LEL"></div>
+
+                      <!-- CO -->
+                      <div class="grid-cell label-cell">CO Range</div>
+                      <div class="grid-cell val-cell"><input type="text" id="inp-r-co" value="0-500 ppm"></div>
+                      <div class="grid-cell label-cell">CO Increment</div>
+                      <div class="grid-cell val-cell"><input type="text" id="inp-i-co" value="1 ppm"></div>
+
+                      <!-- H2S -->
+                      <div class="grid-cell label-cell">H2S Range</div>
+                      <div class="grid-cell val-cell"><input type="text" id="inp-r-h2s" value="0-100.0 ppm"></div>
+                      <div class="grid-cell label-cell">H2S Increment</div>
+                      <div class="grid-cell val-cell"><input type="text" id="inp-i-h2s" value="0.5 ppm"></div>
+
+                      <!-- VOC -->
+                      <div class="grid-cell label-cell">VOC Range</div>
+                      <div class="grid-cell val-cell"><input type="text" id="inp-r-voc" value="0-4000 ppm"></div>
+                      <div class="grid-cell label-cell">VOC Increment</div>
+                      <div class="grid-cell val-cell"><input type="text" id="inp-i-voc" value="0.1 ppm (0-400.0 ppm); 1 ppm (400-4000 ppm)"></div>
+
+                      <!-- NO2 -->
+                      <div class="grid-cell label-cell">NO2 Range</div>
+                      <div class="grid-cell val-cell"><input type="text" id="inp-r-no2" value="0-20.00 ppm"></div>
+                      <div class="grid-cell label-cell">NO2 Increment</div>
+                      <div class="grid-cell val-cell"><input type="text" id="inp-i-no2" value="0.05 ppm"></div>
+                    </div>
+
+                    <div class="grid-2-col">
+                      <div class="grid-form-group">
+                        <label for="inp-flow-rate">Lưu lượng (Flow rate):</label>
+                        <input type="text" id="inp-flow-rate" value="0.45 lít/phút hoặc hơn/ 0.45 LPM or more" required>
+                      </div>
+                      <div class="grid-form-group">
+                        <label for="inp-adj-method">Phương pháp hiệu chỉnh (Methods):</label>
+                        <input type="text" id="inp-adj-method" value="Theo hướng dẫn của Hãng sản xuất/ Follow manual of the manufacture." required>
+                      </div>
+                    </div>
+
+                    <div class="grid-form-group">
+                      <label for="inp-customer">Đơn vị sử dụng (Customer):</label>
+                      <input type="text" id="inp-customer" placeholder="CÔNG TY CỔ PHẦN KIỂM ĐỊNH 6" required>
+                    </div>
+
+                    <!-- Gases table sub-form -->
+                    <h4 class="sub-sec-title">Khí chuẩn sử dụng (Using standard gases)</h4>
+                    <div class="gas-table-editor">
+                      <table class="editor-table">
+                        <thead>
+                          <tr>
+                            <th>Mã số/ID (Lot)</th>
+                            <th>Khí chuẩn (Standard gases)</th>
+                            <th>Độ chính xác (Accuracy)</th>
+                            <th>Hiệu lực (Due date)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td><input type="text" id="inp-gas-id-1" value="WO450448-5"></td>
+                            <td><input type="text" id="inp-gas-name-1" value="25 ppm H2S, 50 ppm CO, 50 %LEL i-C4H10, 12 %vol O2/ N2"></td>
+                            <td><input type="text" id="inp-gas-acc-1" value="±2%"></td>
+                            <td><input type="text" id="inp-gas-due-1" value="03/05/2026"></td>
+                          </tr>
+                          <tr>
+                            <td><input type="text" id="inp-gas-id-2" value="WO344404-1"></td>
+                            <td><input type="text" id="inp-gas-name-2" value="100 ppm i-C4H8/ Air"></td>
+                            <td><input type="text" id="inp-gas-acc-2" value="±2%"></td>
+                            <td><input type="text" id="inp-gas-due-2" value="31/03/2027"></td>
+                          </tr>
+                          <tr>
+                            <td><input type="text" id="inp-gas-id-3" value="WO460757-1"></td>
+                            <td><input type="text" id="inp-gas-name-3" value="100 ppm NO2/ Air"></td>
+                            <td><input type="text" id="inp-gas-acc-3" value="±2%"></td>
+                            <td><input type="text" id="inp-gas-due-3" value="17/07/2025"></td>
+                          </tr>
+                          <tr>
+                            <td><input type="text" id="inp-gas-id-4" value=""></td>
+                            <td><input type="text" id="inp-gas-name-4" value=""></td>
+                            <td><input type="text" id="inp-gas-acc-4" value=""></td>
+                            <td><input type="text" id="inp-gas-due-4" value=""></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div class="grid-2-col">
+                      <div class="grid-form-group">
+                        <label for="inp-env-condition">Điều kiện hiệu chỉnh (Environment):</label>
+                        <input type="text" id="inp-env-condition" value="Tmin = 26.3 °C; Tmax = 28.1 °C; RH = 60%" required>
+                      </div>
+                      <div class="grid-form-group">
+                        <label for="inp-readj-due">Ngày hiệu chỉnh đề nghị (Re-adjustment due):</label>
+                        <input type="text" id="inp-readj-due" placeholder="05/2026" required>
+                      </div>
+                    </div>
+
+                    <div class="grid-2-col">
+                      <div class="grid-form-group">
+                        <label for="inp-report-place-date">Nơi và ngày lập báo cáo (Place & Date):</label>
+                        <input type="text" id="inp-report-place-date" value="TP. HCM, ngày 23 tháng 05 năm 2025" required>
+                      </div>
+                      <div class="grid-form-group">
+                        <label for="inp-tech-head">Phụ trách kỹ thuật (Head of Technical Dept):</label>
+                        <input type="text" id="inp-tech-head" value="Nguyễn Đình Trường Giang" required>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- ================= PAGE 2 FORM ================= -->
+                  <div id="form-sec-page2" class="form-section hidden">
+                    <h3 class="section-title">KẾT QUẢ ĐO CHI TIẾT (TRANG 2)</h3>
+                    
+                    <div class="grid-2-col">
+                      <div class="grid-form-group">
+                        <label for="inp-chk-outside">Kiểm tra bên ngoài (Check outside):</label>
+                        <input type="text" id="inp-chk-outside" value="Đạt/ Pass" required>
+                      </div>
+                      <div class="grid-form-group">
+                        <label for="inp-chk-tech">Kiểm tra kỹ thuật (Technical check):</label>
+                        <input type="text" id="inp-chk-tech" value="Đạt/ Pass" required>
+                      </div>
+                    </div>
+
+                    <div class="grid-2-col">
+                      <div class="grid-form-group">
+                        <label for="inp-cal-env-hours">Thời gian lưu mẫu trong MT hiệu chỉnh:</label>
+                        <input type="text" id="inp-cal-env-hours" value="02 giờ" required>
+                      </div>
+                      <div class="grid-form-group">
+                        <label for="inp-cal-flow-rate">Lưu lượng khí vào máy khi đo:</label>
+                        <input type="text" id="inp-cal-flow-rate" value="0.6 lít/phút/ 0.6 LPM" required>
+                      </div>
+                    </div>
+
+                    <!-- Sensors Measurement Grid (5 gases columns) -->
+                    <h4 class="sub-sec-title">Bảng kết quả đo lường (Measuring results)</h4>
+                    <div class="sensors-results-editor">
+                      <table class="editor-table nested-grid-table">
+                        <thead>
+                          <tr>
+                            <th>Thông số</th>
+                            <th>HC (%LEL)</th>
+                            <th>CO (ppm)</th>
+                            <th>H2S (ppm)</th>
+                            <th>VOC (ppm)</th>
+                            <th>NO2 (ppm)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <!-- Model -->
+                          <tr>
+                            <td class="cell-header">Cảm biến Model</td>
+                            <td><input type="text" id="inp-s-m-hc" value="NC-6264"></td>
+                            <td><input type="text" id="inp-s-m-co" value="ES-1821"></td>
+                            <td><input type="text" id="inp-s-m-h2s" value="ES-1827i"></td>
+                            <td><input type="text" id="inp-s-m-voc" value="PIS-002"></td>
+                            <td><input type="text" id="inp-s-m-no2" value="ESS-03DH"></td>
+                          </tr>
+                          <!-- Serial -->
+                          <tr>
+                            <td class="cell-header">Cảm biến Serial</td>
+                            <td><input type="text" id="inp-s-s-hc" value="77-4468"></td>
+                            <td><input type="text" id="inp-s-s-co" value="792031835ES"></td>
+                            <td><input type="text" id="inp-s-s-h2s" value="7X2041508ES"></td>
+                            <td><input type="text" id="inp-s-s-voc" value="792011223ES"></td>
+                            <td><input type="text" id="inp-s-s-no2" value="488055234ET"></td>
+                          </tr>
+                          <!-- Range -->
+                          <tr>
+                            <td class="cell-header">Thang đo (Range)</td>
+                            <td><input type="text" id="inp-s-r-hc" value="0-100"></td>
+                            <td><input type="text" id="inp-s-r-co" value="0-500"></td>
+                            <td><input type="text" id="inp-s-r-h2s" value="0-100.0"></td>
+                            <td><input type="text" id="inp-s-r-voc" value="0-4000"></td>
+                            <td><input type="text" id="inp-s-r-no2" value="0-20.00"></td>
+                          </tr>
+                          <!-- Standard Gas Conc -->
+                          <tr>
+                            <td class="cell-header">Nồng độ khí chuẩn</td>
+                            <td><input type="text" id="inp-s-c-hc" value="50"></td>
+                            <td><input type="text" id="inp-s-c-co" value="50"></td>
+                            <td><input type="text" id="inp-s-c-h2s" value="25"></td>
+                            <td><input type="text" id="inp-s-c-voc" value="100"></td>
+                            <td><input type="text" id="inp-s-c-no2" value="4"></td>
+                          </tr>
+                          <!-- Display Value -->
+                          <tr>
+                            <td class="cell-header">Giá trị hiển thị</td>
+                            <td><input type="text" id="inp-s-d-hc" value="40"></td>
+                            <td><input type="text" id="inp-s-d-co" value="40"></td>
+                            <td><input type="text" id="inp-s-d-h2s" value="18.5"></td>
+                            <td><input type="text" id="inp-s-d-voc" value="92.0"></td>
+                            <td><input type="text" id="inp-s-d-no2" value="3.05"></td>
+                          </tr>
+                          <!-- Adjustment Value -->
+                          <tr>
+                            <td class="cell-header">Giá trị điều chỉnh</td>
+                            <td><input type="text" id="inp-s-a-hc" value="50"></td>
+                            <td><input type="text" id="inp-s-a-co" value="50"></td>
+                            <td><input type="text" id="inp-s-a-h2s" value="25.0"></td>
+                            <td><input type="text" id="inp-s-a-voc" value="100.0"></td>
+                            <td><input type="text" id="inp-s-a-no2" value="4.00"></td>
+                          </tr>
+                          <!-- Alarm Value -->
+                          <tr>
+                            <td class="cell-header">Giá trị cảnh báo</td>
+                            <td><input type="text" id="inp-s-al-hc" value="10"></td>
+                            <td><input type="text" id="inp-s-al-co" value="25"></td>
+                            <td><input type="text" id="inp-s-al-h2s" value="5.0"></td>
+                            <td><input type="text" id="inp-s-al-voc" value="400.0"></td>
+                            <td><input type="text" id="inp-s-al-no2" value="3.00"></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div class="grid-form-group">
+                      <label for="inp-replacement-parts">Phụ tùng đã được thay thế (Replacement parts):</label>
+                      <textarea id="inp-replacement-parts" rows="3">Phin lọc bụi/ Dust filter
+Phin lọc cho cảm biến khí dễ cháy/ Filter for the combustible gas sensor
+Phin lọc cho cảm biến khí CO/ Filter for CO sensor
+Cảm biến khí NO2/ Nitrogen dioxide sensor</textarea>
+                    </div>
+
+                    <div class="grid-form-group" style="max-width: 50%;">
+                      <label for="inp-operator">Người thực hiện (Operator):</label>
+                      <input type="text" id="inp-operator" value="Nguyễn Văn Huy" required>
+                    </div>
+                  </div>
+
+                  <!-- Form Action Buttons -->
+                  <div class="form-actions-row">
+                    <button type="button" id="export-excel-btn" class="secondary-btn" style="margin-right: auto;">
+                      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                      </svg>
+                      <span>Xuất File Excel</span>
+                    </button>
+                    <button type="button" id="submit-cert-btn" class="primary-btn submit-btn">Xuất Mã QR & Lưu Thư Viện</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Right side: QR code preview panel -->
+            <div class="panel-qr-container">
+              <!-- QR code card -->
+              <div class="card card-qr-display">
+                <div class="qr-preview-container">
+                  <div id="qr-spinner" class="qr-overlay-spinner hidden">
+                    <div class="spinner"></div>
+                  </div>
+                  <div class="canvas-wrapper">
+                    <canvas id="qr-canvas"></canvas>
+                  </div>
+                </div>
+                
+                <div class="qr-target-info">
+                  <div class="target-url-container">
+                    <svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                    </svg>
+                    <span id="qr-target-url" class="target-url">Chưa tạo chứng chỉ</span>
+                  </div>
+                </div>
+
+                <div class="qr-actions">
+                  <button id="copy-link-btn" class="secondary-btn" disabled>
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <span>Copy Link</span>
+                  </button>
+                  <div class="download-dropdown-wrapper">
+                    <button id="download-qr-btn" class="primary-btn" disabled>
+                      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                      </svg>
+                      <span>Tải Mã QR</span>
+                    </button>
+                    <div class="download-options">
+                      <button data-format="png">PNG (Hình ảnh)</button>
+                      <button data-format="svg">SVG (Vector)</button>
+                    </div>
+                  </div>
+                  <button id="print-qr-btn" class="secondary-btn" disabled>
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                      <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
+                    <span>In Nhãn QR</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Customizer controls -->
+              <div class="card card-customizer">
+                <div class="customizer-header">
+                  <h2>Tùy Biến QR</h2>
+                  <button id="reset-customizer" class="reset-text-btn">Reset</button>
+                </div>
+                <div class="customizer-grid">
+                  <div class="color-pickers-row">
+                    <div class="color-picker-wrapper">
+                      <span class="picker-label">Màu QR</span>
+                      <input type="color" id="qr-color-fg" value="#0f172a" />
+                    </div>
+                    <div class="color-picker-wrapper">
+                      <span class="picker-label">Màu Nền</span>
+                      <input type="color" id="qr-color-bg" value="#ffffff" />
+                    </div>
+                  </div>
+                  <div class="logo-control-row">
+                    <input type="file" id="logo-input" accept="image/*" style="display: none;" />
+                    <button id="upload-logo-btn" class="outline-btn" style="width: 100%;">Chèn Logo</button>
+                    <button id="remove-logo-btn" class="remove-btn hidden">Xóa</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Tab: Library of QR Codes -->
+        <div id="tab-library" class="tab-content hidden">
+          <div class="card card-library-full">
+            <div class="library-header">
+              <h2>Danh sách Chứng chỉ Hiệu chỉnh đã tạo</h2>
+              <button id="refresh-library-btn" class="icon-btn" title="Tải lại thư viện">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 4v6h-6"></path>
+                  <path d="M1 20v-6h6"></path>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div id="library-loading" class="library-state-msg">
+              <div class="spinner"></div>
+              <span>Đang tải danh sách từ cơ sở dữ liệu...</span>
+            </div>
+
+            <div id="library-empty" class="library-state-msg hidden">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span>Thư viện trống. Hãy soạn và lưu chứng chỉ đầu tiên.</span>
+            </div>
+
+            <div id="library-table-container" class="library-table-container hidden">
+              <table class="lib-table">
+                <thead>
+                  <tr>
+                    <th>Mã số báo cáo</th>
+                    <th>Tên thiết bị (Object)</th>
+                    <th>Kiểu (Model)</th>
+                    <th>Đơn vị sử dụng (Customer)</th>
+                    <th>Ngày tạo</th>
+                    <th class="actions-col">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="library-tbody">
+                  <!-- Stored rows will go here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <!-- ------------------------------------------------------------- -->
+      <!-- 3. PUBLIC VIEW PAGE (PUBLIC ACCESS DISPLAY) -->
+      <!-- ------------------------------------------------------------- -->
+      <div id="public-view" class="public-view-container hidden">
+        <div id="public-view-loading" class="public-loading-box">
+          <div class="spinner"></div>
+          <p>Đang truy xuất dữ liệu chứng chỉ đo lường...</p>
+        </div>
+
+        <div id="public-view-error" class="public-error-box hidden">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="error-icon">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <h3>Không tìm thấy báo cáo hiệu chỉnh</h3>
+          <p>Chứng chỉ này có thể không tồn tại hoặc dữ liệu giải mã bị sai cấu trúc. Vui lòng thử lại.</p>
+        </div>
+
+        <!-- Read-Only Certificate Viewer -->
+        <div id="public-cert-card" class="public-cert-card hidden">
+          
+          <!-- Page Selector Tabs for Public Reader -->
+          <div class="public-view-tabs no-print">
+            <button id="btn-view-page1" class="pub-tab-btn active">Trang 1: Báo Cáo Hiệu Chỉnh</button>
+            <button id="btn-view-page2" class="pub-tab-btn">Trang 2: Kết Quả Đo Lường</button>
+          </div>
+
+          <!-- ==================== RIKEN CERTIFICATE PAGE 1 ==================== -->
+          <div id="cert-page1" class="riken-cert-page">
+            
+            <!-- Company Letterhead Header -->
+            <div class="riken-header-table">
+              <div class="riken-header-logo-cell">
+                <div class="riken-logo-graphics">
+                  <!-- Custom Geometric RIKEN VIET SVG logo -->
+                  <svg viewBox="0 0 100 80" width="80" height="64">
+                    <path d="M50 5 L85 45 H15 Z" fill="#0033a0"/>
+                    <path d="M22 47 L47 77 H2 Z" fill="#0033a0"/>
+                    <path d="M78 47 L103 77 H53 Z" fill="#0033a0"/>
+                    <circle cx="50" cy="55" r="8" fill="#0033a0"/>
+                  </svg>
+                </div>
+                <div class="riken-logo-text-label">RIKEN VIET</div>
+              </div>
+              <div class="riken-header-info-cell">
+                <div class="riken-comp-name">CÔNG TY TNHH CÔNG NGHỆ MÁY ĐO KHÍ RIKEN VIỆT</div>
+                <div class="riken-comp-web">Website: www.rikenviet.vn / Email: info@rikenviet.vn</div>
+                <div class="riken-comp-branch-grid">
+                  <div class="branch-col">
+                    <strong>Trụ sở chính</strong><br>
+                    79 - 79/1 Lũy Bán Bích,<br>P. Tân Thới Hòa, Q. Tân Phú, TP. HCM<br>
+                    Tel: +84 28 3526 2986 / 87<br>Fax: +84 28 3526 2980
+                  </div>
+                  <div class="branch-col">
+                    <strong>Chi nhánh miền Bắc</strong><br>
+                    Tầng 2, số 20 Khu BH 04,<br>Khu đô thị Vinhomes Imperia,<br>P. Thượng Lý, Q. Hồng Bàng, TP. Hải Phòng<br>
+                    Tel: +84 225 883 2579 / +84 912 61 19 41
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Report Titles -->
+            <div class="riken-title-section">
+              <h2 class="riken-main-title">GIẤY CHỨNG NHẬN HIỆU CHỈNH</h2>
+              <h3 class="riken-sub-title">(ADJUSTMENT REPORT)</h3>
+              <p class="riken-report-no">Giấy CNHC số / Report No: <span id="lbl-report-no" class="text-bold"></span></p>
+            </div>
+
+            <!-- Page 1 Specifications Table -->
+            <table class="riken-report-table">
+              <tbody>
+                <tr>
+                  <td colspan="4">
+                    Tên thiết bị/ <em>Object</em>: <span id="lbl-object" class="text-bold"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="width: 50%;">
+                    Kiểu/ <em>Model</em>: <span id="lbl-model" class="text-bold"></span>
+                  </td>
+                  <td colspan="2" style="width: 50%;">
+                    Số máy/ <em>Serial Number</em>: <span id="lbl-serial" class="text-bold"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="4">
+                    Nơi chế tạo/ <em>Manufacturer</em>: <span id="lbl-manufacturer"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="4">
+                    Ngày sản xuất/ <em>Mfg. Date</em>: <span id="lbl-mfg-date"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="4">
+                    Đặc trưng kỹ thuật/ <em>Specifications</em>: <span id="lbl-specs"></span>
+                  </td>
+                </tr>
+                <!-- Subtable header: Range & Increment -->
+                <tr>
+                  <td colspan="2" class="nested-cell-container" style="padding: 0;">
+                    <table class="inner-spec-table">
+                      <thead>
+                        <tr><th colspan="2" style="border-top:0; border-left:0; border-right:0;">- Phạm vi đo/ <em>Range</em>:</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr><td style="border:0; width:60px;">HC:</td><td style="border:0;" id="lbl-r-hc"></td></tr>
+                        <tr><td style="border:0;">CO:</td><td style="border:0;" id="lbl-r-co"></td></tr>
+                        <tr><td style="border:0;">H2S:</td><td style="border:0;" id="lbl-r-h2s"></td></tr>
+                        <tr><td style="border:0;">VOC:</td><td style="border:0;" id="lbl-r-voc"></td></tr>
+                        <tr><td style="border:0;">NO2:</td><td style="border:0;" id="lbl-r-no2"></td></tr>
+                      </tbody>
+                    </table>
+                  </td>
+                  <td colspan="2" class="nested-cell-container" style="padding: 0;">
+                    <table class="inner-spec-table">
+                      <thead>
+                        <tr><th colspan="2" style="border-top:0; border-left:0; border-right:0;">- Giá trị chia độ/ <em>Increment value</em>:</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr><td style="border:0; width:60px;">HC:</td><td style="border:0;" id="lbl-i-hc"></td></tr>
+                        <tr><td style="border:0;">CO:</td><td style="border:0;" id="lbl-i-co"></td></tr>
+                        <tr><td style="border:0;">H2S:</td><td style="border:0;" id="lbl-i-h2s"></td></tr>
+                        <tr><td style="border:0;">VOC:</td><td style="border:0;" id="lbl-i-voc"></td></tr>
+                        <tr><td style="border:0;">NO2:</td><td style="border:0;" id="lbl-i-no2"></td></tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="4">
+                    - Lưu lượng/ <em>Flow rate</em>: <span id="lbl-flow-rate"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="4">
+                    - Phương pháp hiệu chỉnh/ <em>Methods of adjustment</em>: <span id="lbl-adj-method"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="4">
+                    Đơn vị sử dụng/ <em>Customer</em>: <span id="lbl-customer" class="text-bold"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="4" class="no-pad-cell">
+                    <div class="sub-table-title">Khí chuẩn sử dụng/ <em>Using standard gases</em>:</div>
+                    <table class="gas-detail-table">
+                      <thead>
+                        <tr>
+                          <th>Mã số/ID<br><em>(Lot)</em></th>
+                          <th>Khí chuẩn<br><em>Standard gases</em></th>
+                          <th>Độ chính xác<br><em>Accuracy</em></th>
+                          <th>Hiệu lực<br><em>Due date</em></th>
+                        </tr>
+                      </thead>
+                      <tbody id="gas-table-tbody">
+                        <!-- Gas rows populated by JS -->
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="4">
+                    Điều kiện hiệu chỉnh/ <em>Environment condition</em>: <span id="lbl-env-condition"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="4">
+                    Ngày hiệu chỉnh đề nghị/ <em>Re-adjustment due</em>: <span id="lbl-readj-due" class="text-bold"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Date and Signature block for Page 1 -->
+            <div class="riken-signature-section">
+              <div class="sig-place-date" id="lbl-sig-place-date">TP. HCM, ngày...</div>
+              <div class="sig-title">Phụ trách kỹ thuật</div>
+              <div class="sig-title-eng">(Head of the technical department)</div>
+              
+              <!-- Digital Signature Stamp (Blue Stamp requested) -->
+              <div class="digital-signature-badge">
+                <div class="badge-border-inner">
+                  <div class="stamp-tick">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </div>
+                  <div class="stamp-text-container">
+                    <span class="stamp-status">ĐÃ KÝ điện tử</span>
+                    <span class="stamp-org">Riken Viet Gas Detector</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sig-name" id="lbl-sig-tech-head">Nguyễn Đình Trường Giang</div>
+            </div>
+
+            <!-- Page 1 Bottom Footer border -->
+            <div class="riken-page-footer">
+              <div class="footer-page-num">Trang :1/2</div>
+              <div class="footer-notice">Không được trích sao rời GCN hiệu chỉnh này khi chưa có sự đồng ý bằng văn bản của Công ty TNHH Công nghệ Máy Đo Khí Riken Việt<br><em>(This adjustment report shall not be reproduced except in full, without written approval of Riken Viet Gas Detector Technology Co., Ltd)</em></div>
+            </div>
+
+          </div>
+
+          <!-- ==================== RIKEN CERTIFICATE PAGE 2 ==================== -->
+          <div id="cert-page2" class="riken-cert-page hidden">
+            
+            <!-- Page 2 Header -->
+            <div class="riken-title-section p2-header">
+              <h2 class="riken-main-title">KẾT QUẢ HIỆU CHỈNH</h2>
+              <h3 class="riken-sub-title">(ADJUSTMENT RESULTS)</h3>
+            </div>
+
+            <div class="p2-device-summary">
+              <p>Tên thiết bị/ <em>Object</em>: <strong id="lbl-p2-object"></strong></p>
+              <div class="grid-2-col-text">
+                <span>Kiểu/ <em>Model</em>: <strong id="lbl-p2-model"></strong></span>
+                <span>Số máy/ <em>Serial Number</em>: <strong id="lbl-p2-serial"></strong></span>
+              </div>
+              <p>Nơi chế tạo/ <em>Manufacturer</em>: <span id="lbl-p2-manufacturer"></span></p>
+            </div>
+
+            <div class="p2-results-list">
+              <h4 class="results-heading">KẾT QUẢ/Results</h4>
+              <p>1. Kiểm tra bên ngoài/ <em>Check outside</em>: <strong id="lbl-chk-outside"></strong></p>
+              <p>2. Kiểm tra kỹ thuật/ <em>Technical inspection</em>: <strong id="lbl-chk-tech"></strong></p>
+              <p>3. Kiểm tra đo lường: Trước khi hiệu chỉnh thời gian lưu mẫu trong môi trường hiệu chỉnh là <strong id="lbl-cal-env-hours"></strong><br>
+              <em>Test measurement: Please put equipment in adjustment environment in 2 hours before adjusting</em></p>
+            </div>
+
+            <!-- Measurement results table -->
+            <div class="p2-table-wrapper">
+              <div class="p2-table-subtitle">Kiểm tra đo lường với lưu lượng khí vào máy/ <em>Measuring test with flow rate into device</em>: <span id="lbl-p2-cal-flow-rate" class="text-bold"></span></div>
+              <table class="results-detail-table">
+                <thead>
+                  <tr>
+                    <th rowspan="2" colspan="2" style="width: 25%;">Khí đo<br><em>Measuring gas</em></th>
+                    <th style="width: 15%;">HC</th>
+                    <th style="width: 15%;">CO</th>
+                    <th style="width: 15%;">H2S</th>
+                    <th style="width: 15%;">VOC</th>
+                    <th style="width: 15%;">NO2</th>
+                  </tr>
+                  <tr>
+                    <th>%LEL</th>
+                    <th>ppm</th>
+                    <th>ppm</th>
+                    <th>ppm</th>
+                    <th>ppm</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Sensors details -->
+                  <tr>
+                    <td rowspan="2" class="side-header" style="font-weight:bold; font-size:0.75rem;">Cảm biến<br><em>Sensors</em></td>
+                    <td class="row-header">Model</td>
+                    <td id="lbl-s-m-hc"></td>
+                    <td id="lbl-s-m-co"></td>
+                    <td id="lbl-s-m-h2s"></td>
+                    <td id="lbl-s-m-voc"></td>
+                    <td id="lbl-s-m-no2"></td>
+                  </tr>
+                  <tr>
+                    <td class="row-header">Serial</td>
+                    <td id="lbl-s-s-hc"></td>
+                    <td id="lbl-s-s-co"></td>
+                    <td id="lbl-s-s-h2s"></td>
+                    <td id="lbl-s-s-voc"></td>
+                    <td id="lbl-s-s-no2"></td>
+                  </tr>
+                  <!-- Range -->
+                  <tr>
+                    <td colspan="2" class="row-header">Thang đo<br><em>Measuring range</em></td>
+                    <td id="lbl-s-r-hc"></td>
+                    <td id="lbl-s-r-co"></td>
+                    <td id="lbl-s-r-h2s"></td>
+                    <td id="lbl-s-r-voc"></td>
+                    <td id="lbl-s-r-no2"></td>
+                  </tr>
+                  <!-- Standard gas conc -->
+                  <tr>
+                    <td colspan="2" class="row-header">Nồng độ khí chuẩn<br><em>Concentration of standard gas</em></td>
+                    <td id="lbl-s-c-hc" class="text-bold"></td>
+                    <td id="lbl-s-c-co" class="text-bold"></td>
+                    <td id="lbl-s-c-h2s" class="text-bold"></td>
+                    <td id="lbl-s-c-voc" class="text-bold"></td>
+                    <td id="lbl-s-c-no2" class="text-bold"></td>
+                  </tr>
+                  <!-- Display value -->
+                  <tr>
+                    <td colspan="2" class="row-header">Giá trị hiển thị<br><em>Display value</em></td>
+                    <td id="lbl-s-d-hc"></td>
+                    <td id="lbl-s-d-co"></td>
+                    <td id="lbl-s-d-h2s"></td>
+                    <td id="lbl-s-d-voc"></td>
+                    <td id="lbl-s-d-no2"></td>
+                  </tr>
+                  <!-- Adjustment value -->
+                  <tr>
+                    <td colspan="2" class="row-header">Giá trị điều chỉnh<br><em>Adjustment value</em></td>
+                    <td id="lbl-s-a-hc"></td>
+                    <td id="lbl-s-a-co"></td>
+                    <td id="lbl-s-a-h2s"></td>
+                    <td id="lbl-s-a-voc"></td>
+                    <td id="lbl-s-a-no2"></td>
+                  </tr>
+                  <!-- Alarm value -->
+                  <tr>
+                    <td colspan="2" class="row-header">Giá trị cảnh báo<br><em>Alarm value</em></td>
+                    <td id="lbl-s-al-hc"></td>
+                    <td id="lbl-s-al-co"></td>
+                    <td id="lbl-s-al-h2s"></td>
+                    <td id="lbl-s-al-voc"></td>
+                    <td id="lbl-s-al-no2"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Replacement parts sub-block -->
+            <div class="replacement-parts-block">
+              <div class="parts-title">Phụ tùng đã được thay thế / <em>(Replacement parts)</em>:</div>
+              <div class="parts-list-content" id="lbl-replacement-parts"></div>
+            </div>
+
+            <!-- Date and Signature block for Page 2 -->
+            <div class="riken-signature-section">
+              <div class="sig-title" style="margin-top: 1rem;">Người thực hiện</div>
+              
+              <!-- Digital Signature Stamp (Blue Stamp requested) -->
+              <div class="digital-signature-badge">
+                <div class="badge-border-inner">
+                  <div class="stamp-tick">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </div>
+                  <div class="stamp-text-container">
+                    <span class="stamp-status">ĐÃ KÝ điện tử</span>
+                    <span class="stamp-org">Riken Viet Technician</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sig-name" id="lbl-sig-operator">Nguyễn Văn Huy</div>
+            </div>
+
+            <!-- Page 2 Bottom Footer border -->
+            <div class="riken-page-footer">
+              <div class="footer-page-num">Trang: 2/2</div>
+              <div class="footer-notice" id="lbl-p2-footer-report-no">Kèm theo GCN hiệu chỉnh số/attached to Report No: </div>
+            </div>
+
+          </div>
+
+          <!-- Buttons for Public Page Action -->
+          <div class="public-actions-row no-print">
+            <button id="btn-print-public-sheet" class="primary-btn">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+              </svg>
+              <span>In Chứng Chỉ (Print Report)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
 
     <!-- Footer -->
     <footer class="app-footer no-print">
@@ -469,7 +940,7 @@
   <!-- Hidden Printable Area for QR Code Badge -->
   <div id="print-section" class="print-only">
     <div class="print-badge">
-      <h2 class="print-title">RKV CALIBRATION CERTIFICATE</h2>
+      <h2 class="print-title">RIKEN VIET CO., LTD</h2>
       <div id="print-qr-target"></div>
       <p id="print-url-text" class="print-url"></p>
       <p class="print-footer">Quét mã QR để xem tài liệu chi tiết.</p>
