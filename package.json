@@ -1,0 +1,24 @@
+{
+  "name": "rkv-temp-calib-pdf-to-qr",
+  "version": "1.0.0",
+  "description": "A premium web app for storing PDF files and generating customized QR codes linking to them.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "pdf",
+    "qr-code",
+    "local-share",
+    "wifi-share"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}
