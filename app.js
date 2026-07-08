@@ -107,6 +107,14 @@ const elements = {
   libraryEmpty: document.getElementById('library-empty'),
   libraryTableContainer: document.getElementById('library-table-container'),
   libraryTbody: document.getElementById('library-tbody'),
+
+  // Template Upload
+  templateFileInput: document.getElementById('template-file-input'),
+  templateStatusText: document.getElementById('template-status-text'),
+  templateUploadLabel: document.getElementById('template-upload-label'),
+  templateDeleteBtn: document.getElementById('template-delete-btn'),
+  togglePlaceholderGuideBtn: document.getElementById('toggle-placeholder-guide-btn'),
+  templatePlaceholderGuide: document.getElementById('template-placeholder-guide'),
   
   // Public Viewer
   publicViewLoading: document.getElementById('public-view-loading'),
@@ -359,6 +367,7 @@ function checkAuthSession() {
     
     resetCertificateForm();
     fetchLibraryFiles();
+    checkTemplateStatus();
   } else {
     elements.loginView.classList.remove('hidden');
     elements.adminView.classList.add('hidden');
@@ -629,16 +638,114 @@ function resetCertificateForm() {
 }
 
 // -------------------------------------------------------------
-// SheetJS Excel Generator
+// SheetJS Excel Export (Template-based or fallback)
 // -------------------------------------------------------------
-function handleExcelExport() {
-  const { data, isValid } = readFormValues();
-  // We can export even if partially filled, just warning
+
+/**
+ * Build a flat data map of all placeholder -> value pairs.
+ * Keys match the {{placeholder}} names listed in the guide.
+ */
+function buildPlaceholderMap(data) {
+  return {
+    reportNo: data.reportNo || '',
+    object: data.object || '',
+    model: data.model || '',
+    serial: data.serial || '',
+    manufacturer: data.manufacturer || '',
+    mfgDate: data.mfgDate || '',
+    specs: data.specs || '',
+    rHc: data.rHc || '', iHc: data.iHc || '',
+    rCo: data.rCo || '', iCo: data.iCo || '',
+    rH2s: data.rH2s || '', iH2s: data.iH2s || '',
+    rVoc: data.rVoc || '', iVoc: data.iVoc || '',
+    rNo2: data.rNo2 || '', iNo2: data.iNo2 || '',
+    flowRate: data.flowRate || '',
+    adjMethod: data.adjMethod || '',
+    customer: data.customer || '',
+    envCondition: data.envCondition || '',
+    readjDue: data.readjDue || '',
+    reportPlaceDate: data.reportPlaceDate || '',
+    techHead: data.techHead || '',
+    operator: data.operator || '',
+    gasId1: data.gasId1 || '', gasName1: data.gasName1 || '', gasAcc1: data.gasAcc1 || '', gasDue1: data.gasDue1 || '',
+    gasId2: data.gasId2 || '', gasName2: data.gasName2 || '', gasAcc2: data.gasAcc2 || '', gasDue2: data.gasDue2 || '',
+    gasId3: data.gasId3 || '', gasName3: data.gasName3 || '', gasAcc3: data.gasAcc3 || '', gasDue3: data.gasDue3 || '',
+    gasId4: data.gasId4 || '', gasName4: data.gasName4 || '', gasAcc4: data.gasAcc4 || '', gasDue4: data.gasDue4 || '',
+    chkOutside: data.chkOutside || '',
+    chkTech: data.chkTech || '',
+    calEnvHours: data.calEnvHours || '',
+    calFlowRate: data.calFlowRate || '',
+    sMHc: data.sMHc || '', sMCo: data.sMCo || '', sMH2s: data.sMH2s || '', sMVoc: data.sMVoc || '', sMNo2: data.sMNo2 || '',
+    sSHc: data.sSHc || '', sSCo: data.sSCo || '', sSH2s: data.sSH2s || '', sSVoc: data.sSVoc || '', sSNo2: data.sSNo2 || '',
+    sRHc: data.sRHc || '', sRCo: data.sRCo || '', sRH2s: data.sRH2s || '', sRVoc: data.sRVoc || '', sRNo2: data.sRNo2 || '',
+    sCHc: data.sCHc || '', sCCo: data.sCCo || '', sCH2s: data.sCH2s || '', sCVoc: data.sCVoc || '', sCNo2: data.sCNo2 || '',
+    sDHc: data.sDHc || '', sDCo: data.sDCo || '', sDH2s: data.sDH2s || '', sDVoc: data.sDVoc || '', sDNo2: data.sDNo2 || '',
+    sAHc: data.sAHc || '', sACo: data.sACo || '', sAH2s: data.sAH2s || '', sAVoc: data.sAVoc || '', sANo2: data.sANo2 || '',
+    sAlHc: data.sAlHc || '', sAlCo: data.sAlCo || '', sAlH2s: data.sAlH2s || '', sAlVoc: data.sAlVoc || '', sAlNo2: data.sAlNo2 || '',
+    replacementParts: data.replacementParts || '',
+    signedStamp: 'ĐÃ KÝ điện tử (SIGNED)'
+  };
+}
+
+/**
+ * Replace all {{key}} occurrences in every text cell of the workbook.
+ */
+function fillTemplatePlaceholders(wb, placeholders) {
+  wb.SheetNames.forEach(sheetName => {
+    const ws = wb.Sheets[sheetName];
+    Object.keys(ws).forEach(cellAddr => {
+      if (cellAddr.startsWith('!')) return;
+      const cell = ws[cellAddr];
+      if (cell && cell.t === 's' && typeof cell.v === 'string') {
+        let val = cell.v;
+        let changed = false;
+        for (const [key, replacement] of Object.entries(placeholders)) {
+          const regex = new RegExp(`\\{\\{${key}\\}}`, 'g');
+          if (regex.test(val)) {
+            val = val.replace(new RegExp(`\\{\\{${key}\\}}`, 'g'), replacement);
+            changed = true;
+          }
+        }
+        if (changed) {
+          cell.v = val;
+          cell.w = val; // update formatted text too
+        }
+      }
+    });
+  });
+  return wb;
+}
+
+async function handleExcelExport() {
+  const { data } = readFormValues();
   if (!data.reportNo) {
     showToast('Vui lòng điền số báo cáo trước khi xuất Excel!', 'error');
     return;
   }
 
+  const placeholders = buildPlaceholderMap(data);
+  const safeReportNo = data.reportNo.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+  // ---- Try template-based export first ----
+  try {
+    const resp = await fetch('/api/template', {
+      headers: { 'x-admin-key': state.adminKey }
+    });
+
+    if (resp.ok) {
+      const arrayBuffer = await resp.arrayBuffer();
+      const wb = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true, cellFormula: true });
+      fillTemplatePlaceholders(wb, placeholders);
+      XLSX.writeFile(wb, `RIKEN_Report_${safeReportNo}.xlsx`);
+      showToast('Đã xuất Excel từ template thành công! ✅');
+      return;
+    }
+  } catch (err) {
+    // If network error or no template, fall through to built-in export
+    console.warn('Template fetch failed, using built-in export:', err);
+  }
+
+  // ---- Fallback: built-in generated sheet ----
   try {
     const wsData = [
       ["CÔNG TY TNHH CÔNG NGHỆ MÁY ĐO KHÍ RIKEN VIỆT", "", "", ""],
@@ -673,7 +780,6 @@ function handleExcelExport() {
       ["Nơi & Ngày lập:", data.reportPlaceDate, "Phụ trách kỹ thuật:", data.techHead],
       ["Trạng thái ký tên:", "ĐÃ KÝ điện tử (SIGNED)", "", ""],
       ["", "", "", ""],
-      ["--------------------------------------------------------------------------------", "", "", ""],
       ["TRANG 2: KẾT QUẢ ĐO CHI TIẾT", "", "", ""],
       ["1. Kiểm tra bên ngoài (Check outside):", data.chkOutside, "", ""],
       ["2. Kiểm tra kỹ thuật (Technical inspection):", data.chkTech, "", ""],
@@ -692,17 +798,12 @@ function handleExcelExport() {
       ["Phụ tùng đã được thay thế (Replacement parts):", data.replacementParts, "", ""],
       ["Người thực hiện (Operator):", data.operator, "Trạng thái ký tên:", "ĐÃ KÝ điện tử (SIGNED)"]
     ];
-
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(wsData);
-    
-    // Fit column widths
-    const max_cols = [40, 25, 25, 25];
-    ws['!cols'] = max_cols.map(w => ({ wch: w }));
-
-    XLSX.utils.book_append_sheet(wb, ws, "Adjustment Report");
-    XLSX.writeFile(wb, `RIKEN_Report_${data.reportNo.replace(/[^a-zA-Z0-9_-]/g, '_')}.xlsx`);
-    showToast('Đã xuất Excel thành công!');
+    ws['!cols'] = [40, 25, 25, 25].map(w => ({ wch: w }));
+    XLSX.utils.book_append_sheet(wb, ws, 'Adjustment Report');
+    XLSX.writeFile(wb, `RIKEN_Report_${safeReportNo}.xlsx`);
+    showToast('Đã xuất Excel (built-in) thành công!');
   } catch (err) {
     console.error(err);
     showToast('Lỗi khi xuất tệp Excel', 'error');
@@ -969,6 +1070,102 @@ function setupEventListeners() {
   elements.btnPrintPublicSheet.addEventListener('click', () => {
     window.print();
   });
+
+  // ---- Template Upload Events ----
+  if (elements.templateFileInput) {
+    elements.templateFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('template', file);
+
+      const label = elements.templateUploadLabel;
+      if (label) label.textContent = 'Đang tải lên...';
+
+      try {
+        const resp = await fetch('/api/template', {
+          method: 'POST',
+          headers: { 'x-admin-key': state.adminKey },
+          body: formData
+        });
+        const result = await resp.json();
+        if (result.success) {
+          showToast('Template đã được upload thành công! ✅');
+          checkTemplateStatus();
+        } else {
+          showToast(result.error || 'Lỗi khi upload template', 'error');
+        }
+      } catch (err) {
+        showToast('Không thể kết nối server khi upload', 'error');
+      } finally {
+        e.target.value = '';
+        if (label) label.textContent = 'Thay thế Template';
+      }
+    });
+  }
+
+  if (elements.templateDeleteBtn) {
+    elements.templateDeleteBtn.addEventListener('click', async () => {
+      if (!confirm('Bạn có chắc muốn xoá file template hiện tại không?')) return;
+      try {
+        const resp = await fetch('/api/template', {
+          method: 'DELETE',
+          headers: { 'x-admin-key': state.adminKey }
+        });
+        const result = await resp.json();
+        if (result.success) {
+          showToast('Template đã được xoá.');
+          checkTemplateStatus();
+        } else {
+          showToast(result.error || 'Lỗi xoá template', 'error');
+        }
+      } catch (err) {
+        showToast('Không thể kết nối server', 'error');
+      }
+    });
+  }
+
+  if (elements.togglePlaceholderGuideBtn) {
+    elements.togglePlaceholderGuideBtn.addEventListener('click', () => {
+      const guide = elements.templatePlaceholderGuide;
+      const btn = elements.togglePlaceholderGuideBtn;
+      if (guide.classList.contains('hidden')) {
+        guide.classList.remove('hidden');
+        btn.textContent = 'Ẩn danh sách placeholder';
+      } else {
+        guide.classList.add('hidden');
+        btn.textContent = 'Xem danh sách placeholder';
+      }
+    });
+  }
+}
+
+// Check template status on server and update UI
+async function checkTemplateStatus() {
+  if (!elements.templateStatusText) return;
+  try {
+    const resp = await fetch('/api/template/info', {
+      headers: { 'x-admin-key': state.adminKey }
+    });
+    const result = await resp.json();
+    if (result.success && result.exists) {
+      const kb = Math.round(result.size / 1024);
+      const updated = new Date(result.updatedAt).toLocaleString('vi-VN');
+      elements.templateStatusText.textContent = `✅ Template: excel_template.xlsx (${kb} KB) – Cập nhật: ${updated}`;
+      if (elements.templateDeleteBtn) elements.templateDeleteBtn.classList.remove('hidden');
+      if (elements.templateUploadLabel) elements.templateUploadLabel.querySelector('span') && (elements.templateUploadLabel.querySelector('span').textContent = 'Thay thế Template');
+    } else {
+      elements.templateStatusText.textContent = 'Chưa có template. Hãy tải lên file Excel mẫu (.xlsx).';
+      if (elements.templateDeleteBtn) elements.templateDeleteBtn.classList.add('hidden');
+      if (elements.templateUploadLabel) {
+        const span = elements.templateUploadLabel.querySelector('span');
+        if (span) span.textContent = 'Tải lên Template';
+      }
+    }
+  } catch (err) {
+    // Silently ignore if not admin or server error
+  }
 }
 
 // Toast System

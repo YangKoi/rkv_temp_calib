@@ -503,6 +503,95 @@ Cảm biến khí NO2/ Nitrogen dioxide sensor</textarea>
 
         <!-- Tab: Library of QR Codes -->
         <div id="tab-library" class="tab-content hidden">
+
+          <!-- Template Upload Card -->
+          <div class="card card-template-upload" id="template-upload-card">
+            <div class="template-upload-header">
+              <div class="template-upload-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:var(--accent)">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <polyline points="12 18 12 12 9 15"></polyline>
+                  <polyline points="12 12 15 15"></polyline>
+                </svg>
+                <div>
+                  <h3>File Excel Mẫu</h3>
+                  <p id="template-status-text">Chưa có template. Hãy tải lên file Excel mẫu (.xlsx).</p>
+                </div>
+              </div>
+              <div class="template-upload-actions">
+                <label for="template-file-input" class="secondary-btn" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  <span id="template-upload-label">Tải lên Template</span>
+                </label>
+                <input type="file" id="template-file-input" accept=".xlsx" style="display:none">
+                <button id="template-delete-btn" class="danger-btn hidden" title="Xoá template hiện tại">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="M10 11v6M14 11v6"></path>
+                    <path d="M9 6V4h6v2"></path>
+                  </svg>
+                  Xoá
+                </button>
+              </div>
+            </div>
+            <!-- Placeholder guide -->
+            <div id="template-placeholder-guide" class="template-placeholder-guide hidden">
+              <p><strong>💡 Hướng dẫn:</strong> Trong file Excel mẫu, đặt các placeholder sau vào ô cần điền dữ liệu:</p>
+              <div class="placeholder-grid">
+                <code>{{reportNo}}</code><span>Số báo cáo</span>
+                <code>{{object}}</code><span>Tên thiết bị</span>
+                <code>{{model}}</code><span>Kiểu / Model</span>
+                <code>{{serial}}</code><span>Serial Number</span>
+                <code>{{manufacturer}}</code><span>Nơi chế tạo</span>
+                <code>{{mfgDate}}</code><span>Ngày sản xuất</span>
+                <code>{{customer}}</code><span>Đơn vị sử dụng</span>
+                <code>{{reportPlaceDate}}</code><span>Nơi &amp; Ngày lập</span>
+                <code>{{techHead}}</code><span>Phụ trách kỹ thuật</span>
+                <code>{{operator}}</code><span>Người thực hiện</span>
+                <code>{{envCondition}}</code><span>Điều kiện hiệu chỉnh</span>
+                <code>{{readjDue}}</code><span>Ngày hiệu chỉnh đề nghị</span>
+                <code>{{flowRate}}</code><span>Lưu lượng</span>
+                <code>{{adjMethod}}</code><span>Phương pháp hiệu chỉnh</span>
+                <code>{{specs}}</code><span>Đặc trưng kỹ thuật</span>
+                <code>{{rHc}}</code><span>HC Range</span>
+                <code>{{rCo}}</code><span>CO Range</span>
+                <code>{{rH2s}}</code><span>H2S Range</span>
+                <code>{{rVoc}}</code><span>VOC Range</span>
+                <code>{{rNo2}}</code><span>NO2 Range</span>
+                <code>{{iHc}}</code><span>HC Increment</span>
+                <code>{{iCo}}</code><span>CO Increment</span>
+                <code>{{iH2s}}</code><span>H2S Increment</span>
+                <code>{{iVoc}}</code><span>VOC Increment</span>
+                <code>{{iNo2}}</code><span>NO2 Increment</span>
+                <code>{{gasId1}}</code><span>Khí chuẩn 1 – ID</span>
+                <code>{{gasName1}}</code><span>Khí chuẩn 1 – Tên</span>
+                <code>{{gasAcc1}}</code><span>Khí chuẩn 1 – Accuracy</span>
+                <code>{{gasDue1}}</code><span>Khí chuẩn 1 – Due date</span>
+                <code>{{gasId2}}</code><span>Khí chuẩn 2 – ID</span>
+                <code>{{gasName2}}</code><span>Khí chuẩn 2 – Tên</span>
+                <code>{{gasAcc2}}</code><span>Khí chuẩn 2 – Accuracy</span>
+                <code>{{gasDue2}}</code><span>Khí chuẩn 2 – Due date</span>
+                <code>{{chkOutside}}</code><span>Kiểm tra bên ngoài</span>
+                <code>{{chkTech}}</code><span>Kiểm tra kỹ thuật</span>
+                <code>{{calEnvHours}}</code><span>Thời gian lưu mẫu</span>
+                <code>{{calFlowRate}}</code><span>Lưu lượng khí vào máy</span>
+                <code>{{sMHc}}</code><span>Cảm biến Model HC</span>
+                <code>{{sMCo}}</code><span>Cảm biến Model CO</span>
+                <code>{{replacementParts}}</code><span>Phụ tùng thay thế</span>
+              </div>
+            </div>
+            <button id="toggle-placeholder-guide-btn" class="outline-btn" style="margin-top:8px;font-size:12px;padding:4px 12px;">
+              Xem danh sách placeholder
+            </button>
+          </div>
+
+          <!-- Certificate Library Card -->
           <div class="card card-library-full">
             <div class="library-header">
               <h2>Danh sách Chứng chỉ Hiệu chỉnh đã tạo</h2>
