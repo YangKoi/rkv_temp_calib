@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RKV PDF to QR Hub</title>
+  <title>RKV Calibration Certificate Hub</title>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,8 +12,6 @@
   <link rel="stylesheet" href="style.css">
   <!-- QR Code Generator Library -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <!-- PDF.js library for PDF rendering -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
   <!-- Background Decorative Blurs -->
@@ -31,13 +29,13 @@
         </svg>
         <div class="logo-text">
           <h1>RKV Calibration</h1>
-          <span>PDF to QR Hub</span>
+          <span>Certificate Gateway</span>
         </div>
       </div>
       <div class="header-actions">
         <!-- Theme Toggle -->
         <button id="theme-toggle" class="icon-btn" aria-label="Toggle Theme">
-          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M22 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M4 12H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -48,131 +46,248 @@
             <path d="M4.93 4.93L6.34 6.34" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M17.66 17.66L19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
+        </button>
+
+        <!-- Admin Logout -->
+        <button id="logout-btn" class="secondary-btn hidden">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Đăng xuất</span>
         </button>
       </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="app-main">
-      <!-- Left Panel: Input & Storage -->
-      <section class="panel-left">
-        <!-- Sharing Mode Tabs -->
-        <div class="tabs-container">
-          <button class="tab-btn active" data-mode="local">
-            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
-              <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
-              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
-              <circle cx="12" cy="20" r="1"></circle>
-            </svg>
-            <span>Mạng Wi-Fi (Local)</span>
-          </button>
-          <button class="tab-btn" data-mode="cloud">
-            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
-            </svg>
-            <span>Đám mây (Cloud)</span>
-          </button>
-          <button class="tab-btn" data-mode="link">
-            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-            </svg>
-            <span>Nhập Link (URL)</span>
-          </button>
+    <!-- ------------------------------------------------------------- -->
+    <!-- 1. LOGIN VIEW -->
+    <!-- ------------------------------------------------------------- -->
+    <div id="login-view" class="login-view-container">
+      <div class="card card-login">
+        <div class="login-header">
+          <h2>Hệ Thống Quản Trị RKV</h2>
+          <p>Nhập tài khoản để tạo và quản lý chứng chỉ đo lường</p>
         </div>
+        <form id="login-form">
+          <div class="form-group">
+            <label for="login-username" class="field-label">Tài khoản</label>
+            <input type="text" id="login-username" placeholder="Nhập tài khoản (rkvcalib)" required autocomplete="username"/>
+          </div>
+          <div class="form-group">
+            <label for="login-password" class="field-label">Mật khẩu</label>
+            <input type="password" id="login-password" placeholder="Nhập mật khẩu (7179)" required autocomplete="current-password"/>
+          </div>
+          <button type="submit" class="primary-btn login-submit-btn">Đăng Nhập</button>
+        </form>
+      </div>
+    </div>
 
-        <!-- Mode Descriptions -->
-        <div class="mode-info-box">
-          <div id="info-local" class="mode-desc active">
-            <p><strong>Local Wi-Fi Mode:</strong> PDF được lưu trên máy của bạn. Mã QR sử dụng IP mạng LAN nội bộ. Điện thoại kết nối chung Wi-Fi có thể tải trực tiếp file.</p>
-          </div>
-          <div id="info-cloud" class="mode-desc">
-            <p><strong>Cloud Mode:</strong> Tải file lên máy chủ đám mây công cộng bảo mật. Mã QR có thể quét từ bất kỳ đâu trên thế giới (Liên kết tự động hết hạn sau 60 phút).</p>
-          </div>
-          <div id="info-link" class="mode-desc">
-            <p><strong>Direct Link Mode:</strong> Nhập trực tiếp đường dẫn URL của file PDF đã có sẵn trên mạng để tạo mã QR liên kết nhanh.</p>
-          </div>
-        </div>
+    <!-- ------------------------------------------------------------- -->
+    <!-- 2. ADMIN PORTAL VIEW -->
+    <!-- ------------------------------------------------------------- -->
+    <div id="admin-view" class="admin-view-container hidden">
+      <!-- Portal Tabs -->
+      <div class="tabs-container">
+        <button class="tab-btn active" data-tab="create">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+          <span>Tạo Chứng Chỉ Mới</span>
+        </button>
+        <button class="tab-btn" data-tab="library">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Thư Viện Mã QR</span>
+        </button>
+      </div>
 
-        <!-- Input Section -->
-        <div class="card card-upload">
-          <!-- Dropzone (for Local & Cloud modes) -->
-          <div id="dropzone" class="upload-dropzone">
-            <input type="file" id="file-input" accept="application/pdf" style="display: none;" />
-            <div class="dropzone-content">
-              <div class="upload-icon-wrapper">
-                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="17 8 12 3 7 8"></polyline>
-                  <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
+      <!-- Tab: Create Certificate -->
+      <div id="tab-create" class="tab-content">
+        <div class="admin-grid-layout">
+          
+          <!-- Left side: Interactive form styled like the certificate -->
+          <div class="panel-form-container">
+            <div class="card card-form">
+              <div class="form-header-row">
+                <h2>Bảng Nhập Dữ Liệu Chứng Chỉ</h2>
+                <button id="clear-form-btn" class="reset-text-btn">Xóa trống form</button>
               </div>
-              <h3>Kéo và thả file PDF tại đây</h3>
-              <p class="dropzone-sub">Hoặc click để chọn tệp từ máy tính</p>
-              <span class="file-limits">Định dạng hỗ trợ: PDF (Tối đa 50MB)</span>
-            </div>
-          </div>
-
-          <!-- Direct Link Input (for Link mode) -->
-          <div id="link-input-container" class="link-input-container hidden">
-            <label for="direct-url" class="field-label">Đường dẫn URL file PDF</label>
-            <div class="input-with-button">
-              <input type="url" id="direct-url" placeholder="https://example.com/document.pdf" />
-              <button id="generate-link-btn" class="primary-btn">Tạo Mã</button>
-            </div>
-          </div>
-
-          <!-- Upload Progress -->
-          <div id="upload-progress-container" class="upload-progress-container hidden">
-            <div class="progress-info">
-              <span class="progress-status">Đang tải file lên...</span>
-              <span id="progress-percent" class="progress-percent">0%</span>
-            </div>
-            <div class="progress-bar-bg">
-              <div id="progress-bar-fill" class="progress-bar-fill"></div>
-            </div>
-          </div>
-
-          <!-- Active File Card -->
-          <div id="active-file-card" class="active-file-card hidden">
-            <div class="file-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
-              </svg>
-            </div>
-            <div class="file-details">
-              <span id="active-file-name" class="file-name">document.pdf</span>
-              <div class="file-meta">
-                <span id="active-file-size" class="file-size">0 KB</span>
-                <span class="dot-separator">•</span>
-                <button id="btn-preview-modal" class="preview-text-btn">Xem trước</button>
+              
+              <!-- Calibration Form grid simulating the 4 column sheet layout -->
+              <form id="cert-form" class="cert-grid-form">
+                <!-- Row 1 -->
+                <div class="grid-cell label-cell"><label for="inp-object">Đối tượng (Object):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-object" placeholder="Phương tiện đo nồng độ khí NH3..." required /></div>
+                <div class="grid-cell label-cell"><label for="inp-code">Mã KH (Code):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-code" placeholder="KH1700" required /></div>
+                
+                <!-- Row 2 -->
+                <div class="grid-cell label-cell"><label for="inp-type">Kiểu (Type):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-type" placeholder="SENSEPOINT XCD RTD" required /></div>
+                <div class="grid-cell label-cell"><label for="inp-serial">Số hiệu (Serial):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-serial" placeholder="401537 1051 0060" required /></div>
+                
+                <!-- Row 3 -->
+                <div class="grid-cell label-cell"><label for="inp-manufacture">CSSX (Manufacture):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-manufacture" placeholder="HONEYWELL" required /></div>
+                <div class="grid-cell label-cell"><label for="inp-range">Phạm vi đo (Range):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-range" placeholder="0 ÷ 100 ppm" required /></div>
+                
+                <!-- Row 4 -->
+                <div class="grid-cell label-cell"><label for="inp-resolution">Độ phân giải (Resolution):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-resolution" placeholder="1 ppm" required /></div>
+                <div class="grid-cell label-cell"><label for="inp-tag">Mã quản lý (Tag No):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-tag" placeholder="04GT-5014" required /></div>
+                
+                <!-- Row 5 -->
+                <div class="grid-cell label-cell"><label for="inp-cer">Số GCN (Cer Nº):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-cer" placeholder="C24.39466" required /></div>
+                <div class="grid-cell label-cell"><label for="inp-stamp">Số tem (Stamp Nº):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-stamp" placeholder="23C08095" required /></div>
+                
+                <!-- Row 6 -->
+                <div class="grid-cell label-cell"><label for="inp-method">Quy trình (Method):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-method" placeholder="ETV.MCA 02" required /></div>
+                <div class="grid-cell label-cell"><label for="inp-valid">Thời hạn (Valid until):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-valid" placeholder="31-10-2025" required /></div>
+                
+                <!-- Row 7 -->
+                <div class="grid-cell label-cell"><label for="inp-customer">Cơ sở sử dụng (Customer):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-customer" placeholder="CÔNG TY CỔ PHẦN PHÂN BÓN DẦU..." required /></div>
+                <div class="grid-cell label-cell"><label for="inp-address">Địa chỉ (Address):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-address" placeholder="Lô D, Khu Công nghiệp..." required /></div>
+                
+                <!-- Row 8 -->
+                <div class="grid-cell label-cell"><label for="inp-place">Nơi sử dụng (Place):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-place" placeholder="Nhà máy Đạm Cà Mau..." required /></div>
+                <div class="grid-cell label-cell"><label for="inp-conclusion">Kết luận (Conclusion):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-conclusion" placeholder="Đạt / N/A" required /></div>
+                
+                <!-- Row 9 -->
+                <div class="grid-cell label-cell"><label for="inp-executed">Người thực hiện (Executed by):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-executed" placeholder="Nguyễn Văn Huy" required /></div>
+                <div class="grid-cell label-cell"><label for="inp-d-execution">Ngày thực hiện (Date of Execution):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-d-execution" placeholder="11:18 12/11/2024" required /></div>
+                
+                <!-- Row 10 -->
+                <div class="grid-cell label-cell"><label for="inp-inspector">Người soát xét (Inspector by):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-inspector" placeholder="Nguyễn Ngọc Tuấn" required /></div>
+                <div class="grid-cell label-cell"><label for="inp-d-inspector">Ngày soát xét (Date of Inspector):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-d-inspector" placeholder="11:04 13/11/2024" required /></div>
+                
+                <!-- Row 11 -->
+                <div class="grid-cell label-cell"><label for="inp-approve">Người phê duyệt (Approve by):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-approve" placeholder="Nguyễn Hoàng Giang" required /></div>
+                <div class="grid-cell label-cell"><label for="inp-d-issue">Ngày phê duyệt (Date of Issue):</label></div>
+                <div class="grid-cell val-cell"><input type="text" id="inp-d-issue" placeholder="15:54 13/11/2024" required /></div>
+              </form>
+              <div class="form-actions-row">
+                <button type="button" id="submit-cert-btn" class="primary-btn submit-btn">Xuất Mã QR & Lưu Thư Viện</button>
               </div>
             </div>
-            <button id="remove-file-btn" class="remove-btn" title="Remove file">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
           </div>
-        </div>
 
-        <!-- PDF Storage Library (Fulfills 'lưu trữ file pdf') -->
-        <div class="card card-library">
+          <!-- Right side: QR code preview panel -->
+          <div class="panel-qr-container">
+            <!-- QR code card -->
+            <div class="card card-qr-display">
+              <div class="qr-preview-container">
+                <div id="qr-spinner" class="qr-overlay-spinner hidden">
+                  <div class="spinner"></div>
+                </div>
+                <div class="canvas-wrapper">
+                  <canvas id="qr-canvas"></canvas>
+                </div>
+              </div>
+              
+              <div class="qr-target-info">
+                <div class="target-url-container">
+                  <svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  </svg>
+                  <span id="qr-target-url" class="target-url">Chưa tạo chứng chỉ</span>
+                </div>
+              </div>
+
+              <div class="qr-actions">
+                <button id="copy-link-btn" class="secondary-btn" disabled>
+                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>Copy Link</span>
+                </button>
+                <div class="download-dropdown-wrapper">
+                  <button id="download-qr-btn" class="primary-btn" disabled>
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Tải Mã QR</span>
+                  </button>
+                  <div class="download-options">
+                    <button data-format="png">PNG (Hình ảnh)</button>
+                    <button data-format="svg">SVG (Vector)</button>
+                  </div>
+                </div>
+                <button id="print-qr-btn" class="secondary-btn" disabled>
+                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                  </svg>
+                  <span>In Nhãn QR</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Customizer controls -->
+            <div class="card card-customizer">
+              <div class="customizer-header">
+                <h2>Tùy Biến QR</h2>
+                <button id="reset-customizer" class="reset-text-btn">Reset</button>
+              </div>
+              <div class="customizer-grid">
+                <div class="color-pickers-row">
+                  <div class="color-picker-wrapper">
+                    <span class="picker-label">Màu QR</span>
+                    <input type="color" id="qr-color-fg" value="#0f172a" />
+                  </div>
+                  <div class="color-picker-wrapper">
+                    <span class="picker-label">Màu Nền</span>
+                    <input type="color" id="qr-color-bg" value="#ffffff" />
+                  </div>
+                </div>
+                <div class="logo-control-row">
+                  <input type="file" id="logo-input" accept="image/*" style="display: none;" />
+                  <button id="upload-logo-btn" class="outline-btn" style="width: 100%;">Chèn Logo</button>
+                  <button id="remove-logo-btn" class="remove-btn hidden">Xóa</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tab: Library of QR Codes -->
+      <div id="tab-library" class="tab-content hidden">
+        <div class="card card-library-full">
           <div class="library-header">
-            <div class="title-with-badge">
-              <h2>Kho Lưu Trữ PDF</h2>
-              <span id="library-count" class="badge">0</span>
-            </div>
-            <button id="refresh-library-btn" class="icon-btn" title="Làm mới danh sách">
+            <h2>Danh sách Chứng chỉ Đo lường đã tạo</h2>
+            <button id="refresh-library-btn" class="icon-btn" title="Tải lại thư viện">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M23 4v6h-6"></path>
                 <path d="M1 20v-6h6"></path>
@@ -183,7 +298,7 @@
 
           <div id="library-loading" class="library-state-msg">
             <div class="spinner"></div>
-            <span>Đang tải danh sách file...</span>
+            <span>Đang tải danh sách từ cơ sở dữ liệu...</span>
           </div>
 
           <div id="library-empty" class="library-state-msg hidden">
@@ -191,158 +306,157 @@
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
             </svg>
-            <span>Thư viện trống. Hãy tải lên file PDF đầu tiên của bạn!</span>
+            <span>Thư viện trống. Hãy tạo chứng chỉ đầu tiên để bắt đầu lưu trữ.</span>
           </div>
 
-          <div id="library-list" class="library-list hidden">
-            <!-- Stored file items will be dynamically generated here -->
-          </div>
-        </div>
-      </section>
-
-      <!-- Right Panel: QR Code and Customization -->
-      <section class="panel-right">
-        <!-- QR Code Result Card -->
-        <div class="card card-qr-display">
-          <div class="qr-preview-container">
-            <div id="qr-spinner" class="qr-overlay-spinner hidden">
-              <div class="spinner"></div>
-            </div>
-            <!-- Canvas where QR code will be rendered -->
-            <div class="canvas-wrapper">
-              <canvas id="qr-canvas"></canvas>
-            </div>
-          </div>
-
-          <div class="qr-target-info">
-            <div class="target-url-container">
-              <svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-              </svg>
-              <span id="qr-target-url" class="target-url">Chưa có liên kết QR</span>
-            </div>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="qr-actions">
-            <button id="copy-link-btn" class="secondary-btn" disabled>
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
-              <span>Copy Link</span>
-            </button>
-            
-            <div class="download-dropdown-wrapper">
-              <button id="download-qr-btn" class="primary-btn" disabled>
-                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                <span>Tải Mã QR</span>
-              </button>
-              <div class="download-options">
-                <button data-format="png">PNG (Định dạng ảnh)</button>
-                <button data-format="svg">SVG (Định dạng Vector)</button>
-              </div>
-            </div>
-
-            <button id="print-qr-btn" class="secondary-btn" disabled>
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                <rect x="6" y="14" width="12" height="8"></rect>
-              </svg>
-              <span>In Mã QR</span>
-            </button>
+          <div id="library-table-container" class="library-table-container hidden">
+            <table class="lib-table">
+              <thead>
+                <tr>
+                  <th>Mã chứng chỉ</th>
+                  <th>Số GCN (Cer Nº)</th>
+                  <th>Đối tượng (Object)</th>
+                  <th>Cơ sở sử dụng (Customer)</th>
+                  <th>Ngày tạo</th>
+                  <th class="actions-col">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="library-tbody">
+                <!-- Stored rows will go here -->
+              </tbody>
+            </table>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Customization Card -->
-        <div class="card card-customizer">
-          <div class="customizer-header">
-            <h2>Tùy Biến Mã QR</h2>
-            <button id="reset-customizer" class="reset-text-btn">Khôi phục mặc định</button>
-          </div>
+    <!-- ------------------------------------------------------------- -->
+    <!-- 3. PUBLIC VIEW PAGE (PUBLIC ACCESS SCANNING DISPLAY) -->
+    <!-- ------------------------------------------------------------- -->
+    <div id="public-view" class="public-view-container hidden">
+      <div id="public-view-loading" class="public-loading-box">
+        <div class="spinner"></div>
+        <p>Đang truy xuất thông tin chứng chỉ đo lường...</p>
+      </div>
 
-          <div class="customizer-grid">
-            <!-- Colors -->
-            <div class="custom-control-group">
-              <label class="control-label">Màu sắc</label>
-              <div class="color-pickers-row">
-                <div class="color-picker-wrapper">
-                  <span class="picker-label">Màu mã (Foreground)</span>
-                  <div class="picker-input-container">
-                    <input type="color" id="qr-color-fg" value="#0f172a" />
-                    <span id="fg-color-hex" class="hex-label">#0F172A</span>
-                  </div>
-                </div>
-                <div class="color-picker-wrapper">
-                  <span class="picker-label">Màu nền (Background)</span>
-                  <div class="picker-input-container">
-                    <input type="color" id="qr-color-bg" value="#ffffff" />
-                    <span id="bg-color-hex" class="hex-label">#FFFFFF</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+      <div id="public-view-error" class="public-error-box hidden">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="error-icon">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <h3>Không tìm thấy dữ liệu chứng chỉ</h3>
+        <p>Chứng chỉ này có thể đã bị xóa hoặc liên kết không đúng cấu trúc. Vui lòng quét lại mã QR chính xác.</p>
+      </div>
 
-            <!-- Size Slider -->
-            <div class="custom-control-group">
-              <div class="control-label-row">
-                <label for="qr-size-slider">Kích thước</label>
-                <span id="size-value-display">300 x 300 px</span>
-              </div>
-              <input type="range" id="qr-size-slider" min="200" max="600" step="50" value="300" class="slider-input" />
-            </div>
-
-            <!-- Logo Upload -->
-            <div class="custom-control-group">
-              <label class="control-label">Chèn Logo ở trung tâm</label>
-              <div class="logo-control-row">
-                <input type="file" id="logo-input" accept="image/*" style="display: none;" />
-                <button id="upload-logo-btn" class="outline-btn">Chọn ảnh Logo</button>
-                <span id="logo-name-display" class="logo-status">Chưa có logo</span>
-                <button id="remove-logo-btn" class="remove-btn hidden" title="Xóa logo">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Advanced (Error Correction, Margin) -->
-            <div class="custom-control-group">
-              <div class="advanced-controls-row">
-                <div class="control-sub-group">
-                  <label for="qr-ecc" class="sub-label">Sửa lỗi (ECC)</label>
-                  <select id="qr-ecc">
-                    <option value="L">Thấp (L - 7%)</option>
-                    <option value="M">Trung bình (M - 15%)</option>
-                    <option value="Q">Tốt (Q - 25%)</option>
-                    <option value="H" selected>Cao (H - 30% - Khuyên dùng khi có logo)</option>
-                  </select>
-                </div>
-                <div class="control-sub-group">
-                  <label for="qr-margin" class="sub-label">Viền trắng (Margin)</label>
-                  <select id="qr-margin">
-                    <option value="0">Không viền (0)</option>
-                    <option value="1">Nhỏ (1)</option>
-                    <option value="2">Vừa (2)</option>
-                    <option value="4" selected>Mặc định (4)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
+      <!-- Public read-only certificate table (styled exactly like the user's calibration sheet image) -->
+      <div id="public-cert-card" class="public-cert-card hidden">
+        <div class="cert-table-wrapper">
+          <table class="calibration-sheet-table">
+            <thead>
+              <tr>
+                <th colspan="4" class="sheet-title-header">
+                  CHỨNG CHỈ ĐO LƯỜNG (CERTIFICATION)
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Row 1 -->
+              <tr>
+                <td class="sheet-label">Đối tượng:<br><span class="eng-sub">(Object)</span></td>
+                <td id="lbl-object" class="sheet-value"></td>
+                <td class="sheet-label">Mã KH:<br><span class="eng-sub">(Code)</span></td>
+                <td id="lbl-code" class="sheet-value"></td>
+              </tr>
+              <!-- Row 2 -->
+              <tr>
+                <td class="sheet-label">Kiểu:<br><span class="eng-sub">(Type)</span></td>
+                <td id="lbl-type" class="sheet-value"></td>
+                <td class="sheet-label">Số hiệu:<br><span class="eng-sub">(Serial)</span></td>
+                <td id="lbl-serial" class="sheet-value"></td>
+              </tr>
+              <!-- Row 3 -->
+              <tr>
+                <td class="sheet-label">CSSX:<br><span class="eng-sub">(Manufacture)</span></td>
+                <td id="lbl-manufacture" class="sheet-value"></td>
+                <td class="sheet-label">Phạm vi đo:<br><span class="eng-sub">(Range)</span></td>
+                <td id="lbl-range" class="sheet-value"></td>
+              </tr>
+              <!-- Row 4 -->
+              <tr>
+                <td class="sheet-label">Độ phân giải:<br><span class="eng-sub">(Resolution)</span></td>
+                <td id="lbl-resolution" class="sheet-value"></td>
+                <td class="sheet-label">Mã quản lý:<br><span class="eng-sub">(Tag No)</span></td>
+                <td id="lbl-tag" class="sheet-value"></td>
+              </tr>
+              <!-- Row 5 -->
+              <tr>
+                <td class="sheet-label text-bold">Số GCN:<br><span class="eng-sub">(Cer Nº)</span></td>
+                <td id="lbl-cer" class="sheet-value text-bold"></td>
+                <td class="sheet-label">Số tem:<br><span class="eng-sub">(Stamp Nº)</span></td>
+                <td id="lbl-stamp" class="sheet-value"></td>
+              </tr>
+              <!-- Row 6 -->
+              <tr>
+                <td class="sheet-label">Quy trình:<br><span class="eng-sub">(Method)</span></td>
+                <td id="lbl-method" class="sheet-value"></td>
+                <td class="sheet-label">Thời hạn:<br><span class="eng-sub">(Valid until)</span></td>
+                <td id="lbl-valid" class="sheet-value"></td>
+              </tr>
+              <!-- Row 7 -->
+              <tr>
+                <td class="sheet-label text-bold">Cơ sở sử dụng:<br><span class="eng-sub">(Customer)</span></td>
+                <td id="lbl-customer" class="sheet-value text-bold"></td>
+                <td class="sheet-label">Địa chỉ:<br><span class="eng-sub">(Address)</span></td>
+                <td id="lbl-address" class="sheet-value"></td>
+              </tr>
+              <!-- Row 8 -->
+              <tr>
+                <td class="sheet-label">Nơi sử dụng:<br><span class="eng-sub">(Place)</span></td>
+                <td id="lbl-place" class="sheet-value"></td>
+                <td class="sheet-label text-bold">Kết luận:<br><span class="eng-sub">(Conclusion)</span></td>
+                <td id="lbl-conclusion" class="sheet-value text-bold"></td>
+              </tr>
+              <!-- Row 9 -->
+              <tr>
+                <td class="sheet-label">Người thực hiện:<br><span class="eng-sub">(Executed by)</span></td>
+                <td id="lbl-executed" class="sheet-value"></td>
+                <td class="sheet-label">Ngày thực hiện:<br><span class="eng-sub">(Date of Execution)</span></td>
+                <td id="lbl-d-execution" class="sheet-value"></td>
+              </tr>
+              <!-- Row 10 -->
+              <tr>
+                <td class="sheet-label">Người soát xét:<br><span class="eng-sub">(Inspector by)</span></td>
+                <td id="lbl-inspector" class="sheet-value"></td>
+                <td class="sheet-label">Ngày soát xét:<br><span class="eng-sub">(Date of Inspector)</span></td>
+                <td id="lbl-d-inspector" class="sheet-value"></td>
+              </tr>
+              <!-- Row 11 -->
+              <tr>
+                <td class="sheet-label">Người phê duyệt:<br><span class="eng-sub">(Approve by)</span></td>
+                <td id="lbl-approve" class="sheet-value"></td>
+                <td class="sheet-label">Ngày phê duyệt:<br><span class="eng-sub">(Date of Issue)</span></td>
+                <td id="lbl-d-issue" class="sheet-value"></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </section>
-    </main>
+        
+        <div class="public-actions-row">
+          <button id="btn-print-public-sheet" class="primary-btn">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            <span>In Chứng Chỉ (Print Certificate)</span>
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Footer -->
-    <footer class="app-footer">
+    <footer class="app-footer no-print">
       <div class="footer-info">
         <p>Ứng dụng đang hoạt động tại địa chỉ: <span id="server-ip-status">Đang lấy IP...</span></p>
       </div>
@@ -352,38 +466,7 @@
     </footer>
   </div>
 
-  <!-- PDF Preview Modal -->
-  <div id="preview-modal" class="modal-overlay hidden">
-    <div class="modal-container">
-      <div class="modal-header">
-        <h2 id="modal-title">Xem trước tài liệu</h2>
-        <button id="close-modal-btn" class="close-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-content">
-        <div id="pdf-viewer-container" class="pdf-viewer-scroll">
-          <canvas id="pdf-preview-canvas"></canvas>
-          <div id="pdf-rendering-indicator" class="pdf-loading">
-            <div class="spinner"></div>
-            <span>Đang render trang PDF...</span>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <div class="pdf-pagination">
-          <button id="pdf-prev-page" class="secondary-btn" disabled>Trang trước</button>
-          <span id="pdf-page-num" class="page-num-display">Trang 1 / 1</span>
-          <button id="pdf-next-page" class="secondary-btn" disabled>Trang sau</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Hidden Printable Area for QR Code -->
+  <!-- Hidden Printable Area for QR Code Badge -->
   <div id="print-section" class="print-only">
     <div class="print-badge">
       <h2 class="print-title">RKV CALIBRATION CERTIFICATE</h2>
@@ -394,7 +477,7 @@
   </div>
 
   <!-- Toast Notification System -->
-  <div id="toast-container" class="toast-container"></div>
+  <div id="toast-container" class="toast-container no-print"></div>
 
   <!-- Main Application Logic Script -->
   <script src="app.js"></script>
