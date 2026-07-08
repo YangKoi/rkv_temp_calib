@@ -131,14 +131,35 @@ async function fetchServerConfig() {
       const data = await res.json();
       elements.serverIpStatus.textContent = `http://${data.localIP}:${data.port}`;
     } else {
-      elements.serverIpStatus.textContent = window.location.origin;
+      throw new Error('Local server API returned error');
     }
   } catch (err) {
-    elements.serverIpStatus.textContent = window.location.origin;
+    // Enable static mode for GitHub Pages
+    elements.serverIpStatus.textContent = 'Chạy chế độ Tĩnh (GitHub Pages)';
+    
+    // Hide local-only tab
+    const localTab = document.querySelector('.tab-btn[data-mode="local"]');
+    if (localTab) {
+      localTab.style.display = 'none';
+    }
+    
+    // Hide library storage card
+    const libraryCard = document.querySelector('.card-library');
+    if (libraryCard) {
+      libraryCard.style.display = 'none';
+    }
+    
+    // Switch to Cloud mode as default
+    switchMode('cloud');
   }
 }
 
 async function fetchLibraryFiles() {
+  // Skip library loading if in static hosting environment
+  if (elements.serverIpStatus.textContent === 'Chạy chế độ Tĩnh (GitHub Pages)') {
+    return;
+  }
+
   try {
     elements.libraryLoading.classList.remove('hidden');
     elements.libraryList.classList.add('hidden');
@@ -163,7 +184,7 @@ async function fetchLibraryFiles() {
   } catch (err) {
     elements.libraryLoading.classList.add('hidden');
     elements.libraryEmpty.classList.remove('hidden');
-    showToast(err.message, 'error');
+    console.warn('Library loading failed (likely static mode):', err.message);
   }
 }
 

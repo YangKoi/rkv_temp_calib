@@ -19,7 +19,7 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 }
 
 // Serve frontend static files
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 // Serve uploads directory
 app.use('/uploads', express.static(UPLOADS_DIR));
@@ -165,7 +165,7 @@ app.get('/api/config', (req, res) => {
 
 // Fallback to serve index.html for single page app routing
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(PORT, () => {
