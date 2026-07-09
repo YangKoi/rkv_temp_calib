@@ -1,99 +1,11 @@
-// RKV Calibration Certificate Hub - Frontend Application Logic (RIKEN VIET 2-Page Certificate)
-
-// Short-key mapping for URL Base64 compression (reduces string length by ~60%)
-const keyMapping = {
-  reportNo: 'rn',
-  object: 'o', model: 'm', serial: 's', manufacturer: 'mf', mfgDate: 'md', specs: 'sp',
-  r_hc: 'rh', i_hc: 'ih', r_co: 'rc', i_co: 'ic', r_h2s: 'ry', i_h2s: 'iy', r_voc: 'rv', i_voc: 'iv', r_no2: 'rn2', i_no2: 'in2',
-  flowRate: 'fr', adjMethod: 'am', customer: 'cu', envCondition: 'ec', readjDue: 'rd', reportPlaceDate: 'rpd', techHead: 'th',
-  gas_id_1: 'g1i', gas_name_1: 'g1n', gas_acc_1: 'g1a', gas_due_1: 'g1d',
-  gas_id_2: 'g2i', gas_name_2: 'g2n', gas_acc_2: 'g2a', gas_due_2: 'g2d',
-  gas_id_3: 'g3i', gas_name_3: 'g3n', gas_acc_3: 'g3a', gas_due_3: 'g3d',
-  gas_id_4: 'g4i', gas_name_4: 'g4n', gas_acc_4: 'g4a', gas_due_4: 'g4d',
-  chkOutside: 'co1', chkTech: 'ct1', calEnvHours: 'ceh', calFlowRate: 'cfr',
-  s_m_hc: 'mhc', s_m_co: 'mco', s_m_h2s: 'my', s_m_voc: 'mv', s_m_no2: 'mn2',
-  s_s_hc: 'shc', s_s_co: 'sco', s_s_h2s: 'sy', s_s_voc: 'sv', s_s_no2: 'sn2',
-  s_r_hc: 'rhc', s_r_co: 'rco', s_r_h2s: 'ryy', s_r_voc: 'rvo', s_r_no2: 'rn0',
-  s_c_hc: 'chc', s_c_co: 'cco', s_c_h2s: 'cyy', s_c_voc: 'cvo', s_c_no2: 'cn0',
-  s_d_hc: 'dhc', s_d_co: 'dco', s_d_h2s: 'dyy', s_d_voc: 'dvo', s_d_no2: 'dn0',
-  s_a_hc: 'ahc', s_a_co: 'aco', s_a_h2s: 'ayy', s_a_voc: 'avo', s_a_no2: 'an0',
-  s_al_hc: 'lhc', s_al_co: 'lco', s_al_h2s: 'lyy', s_al_voc: 'lvo', s_al_no2: 'ln0',
-  replacementParts: 'rp', operator: 'op'
-};
-
-// =============================================================
-// IndexedDB Template Storage (works on GitHub Pages / offline)
-// Stores the Excel template file as ArrayBuffer in the browser.
-// No server required.
-// =============================================================
-const templateStore = {
-  DB_NAME: 'rkv_template_db',
-  STORE: 'templates',
-  KEY: 'excel_template',
-  META_KEY: 'excel_template_meta',
-
-  _open() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(this.DB_NAME, 1);
-      req.onupgradeneeded = (e) => {
-        e.target.result.createObjectStore(this.STORE);
-      };
-      req.onsuccess = (e) => resolve(e.target.result);
-      req.onerror = (e) => reject(e.target.error);
-    });
-  },
-
-  async save(arrayBuffer, meta) {
-    const db = await this._open();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(this.STORE, 'readwrite');
-      const store = tx.objectStore(this.STORE);
-      store.put(arrayBuffer, this.KEY);
-      store.put(meta, this.META_KEY);
-      tx.oncomplete = resolve;
-      tx.onerror = (e) => reject(e.target.error);
-    });
-  },
-
-  async load() {
-    const db = await this._open();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(this.STORE, 'readonly');
-      const req = tx.objectStore(this.STORE).get(this.KEY);
-      req.onsuccess = (e) => resolve(e.target.result || null);
-      req.onerror = (e) => reject(e.target.error);
-    });
-  },
-
-  async loadMeta() {
-    const db = await this._open();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(this.STORE, 'readonly');
-      const req = tx.objectStore(this.STORE).get(this.META_KEY);
-      req.onsuccess = (e) => resolve(e.target.result || null);
-      req.onerror = (e) => reject(e.target.error);
-    });
-  },
-
-  async remove() {
-    const db = await this._open();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(this.STORE, 'readwrite');
-      const store = tx.objectStore(this.STORE);
-      store.delete(this.KEY);
-      store.delete(this.META_KEY);
-      tx.oncomplete = resolve;
-      tx.onerror = (e) => reject(e.target.error);
-    });
-  }
-};
+// RIKEN VIET - PDF to QR Hub Controller
 
 // State Manager
 const state = {
-  isStaticMode: false,
   adminKey: '7179',
   activeQRUrl: '',
   activeCertName: '',
+  selectedFile: null,
   qrSettings: {
     fgColor: '#0f172a',
     bgColor: '#ffffff',
@@ -101,26 +13,14 @@ const state = {
     logoImg: null,
     logoName: ''
   },
-  certificates: []
+  githubConfig: {
+    owner: 'YangKoi',
+    repo: 'rkv_temp_calib',
+    branch: 'main',
+    folder: 'RIKEN VIET',
+    token: ''
+  }
 };
-
-// Form Fields List
-const formFieldIds = [
-  'report-no', 'object', 'model', 'serial', 'manufacturer', 'mfg-date', 'specs',
-  'r-hc', 'i-hc', 'r-co', 'i-co', 'r-h2s', 'i-h2s', 'r-voc', 'i-voc', 'r-no2', 'i-no2',
-  'flow-rate', 'adj-method', 'customer', 'gas-id-1', 'gas-name-1', 'gas-acc-1', 'gas-due-1',
-  'gas-id-2', 'gas-name-2', 'gas-acc-2', 'gas-due-2', 'gas-id-3', 'gas-name-3', 'gas-acc-3', 'gas-due-3',
-  'gas-id-4', 'gas-name-4', 'gas-acc-4', 'gas-due-4', 'env-condition', 'readj-due', 'report-place-date',
-  'tech-head', 'chk-outside', 'chk-tech', 'cal-env-hours', 'cal-flow-rate',
-  's-m-hc', 's-m-co', 's-m-h2s', 's-m-voc', 's-m-no2',
-  's-s-hc', 's-s-co', 's-s-h2s', 's-s-voc', 's-s-no2',
-  's-r-hc', 's-r-co', 's-r-h2s', 's-r-voc', 's-r-no2',
-  's-c-hc', 's-c-co', 's-c-h2s', 's-c-voc', 's-c-no2',
-  's-d-hc', 's-d-co', 's-d-h2s', 's-d-voc', 's-d-no2',
-  's-a-hc', 's-a-co', 's-a-h2s', 's-a-voc', 's-a-no2',
-  's-al-hc', 's-al-co', 's-al-h2s', 's-al-voc', 's-al-no2',
-  'replacement-parts', 'operator'
-];
 
 // DOM Cache
 const elements = {
@@ -130,35 +30,54 @@ const elements = {
   // Views
   loginView: document.getElementById('login-view'),
   adminView: document.getElementById('admin-view'),
-  publicView: document.getElementById('public-view'),
   
-  // Login
+  // Login Form
   loginForm: document.getElementById('login-form'),
   loginUsername: document.getElementById('login-username'),
   loginPassword: document.getElementById('login-password'),
   
-  // Admin Navigation Tabs
+  // Navigation Tabs
   tabButtons: document.querySelectorAll('.tabs-container .tab-btn'),
-  tabCreate: document.getElementById('tab-create'),
+  tabUpload: document.getElementById('tab-upload'),
   tabLibrary: document.getElementById('tab-library'),
+  navLibraryBtn: document.getElementById('nav-library-btn'),
   
-  // Form Editor
-  certForm: document.getElementById('cert-form'),
-  clearFormBtn: document.getElementById('clear-form-btn'),
-  submitCertBtn: document.getElementById('submit-cert-btn'),
-  exportExcelBtn: document.getElementById('export-excel-btn'),
-  formSecButtons: document.querySelectorAll('.form-sec-btn'),
-  formSecPage1: document.getElementById('form-sec-page1'),
-  formSecPage2: document.getElementById('form-sec-page2'),
+  // Config Toggle
+  configToggleBtn: document.getElementById('config-toggle-btn'),
+  githubConfigPanel: document.getElementById('github-config-panel'),
+  saveConfigBtn: document.getElementById('save-config-btn'),
+  testConfigBtn: document.getElementById('test-config-btn'),
   
-  // QR Output Panel
+  // Config Inputs
+  cfgOwner: document.getElementById('cfg-owner'),
+  cfgRepo: document.getElementById('cfg-repo'),
+  cfgBranch: document.getElementById('cfg-branch'),
+  cfgFolder: document.getElementById('cfg-folder'),
+  cfgToken: document.getElementById('cfg-token'),
+  
+  // Upload Drop Zone
+  dropZone: document.getElementById('drop-zone'),
+  pdfFileInput: document.getElementById('pdf-file-input'),
+  selectedFileCard: document.getElementById('selected-file-card'),
+  fileDisplayName: document.getElementById('file-display-name'),
+  fileDisplaySize: document.getElementById('file-display-size'),
+  removeFileBtn: document.getElementById('remove-file-btn'),
+  uploadProcessBtn: document.getElementById('upload-process-btn'),
+  
+  // Progress Bar
+  uploadProgressContainer: document.getElementById('upload-progress-container'),
+  uploadProgressBar: document.getElementById('upload-progress-bar'),
+  uploadStatusText: document.getElementById('upload-status-text'),
+  uploadStatusPercent: document.getElementById('upload-status-percent'),
+  
+  // QR Code Preview & Actions
   qrCanvas: document.getElementById('qr-canvas'),
   qrSpinner: document.getElementById('qr-spinner'),
   qrTargetUrl: document.getElementById('qr-target-url'),
   copyLinkBtn: document.getElementById('copy-link-btn'),
-  downloadQrBtn: document.getElementById('download-qr-btn'),
-  downloadOptions: document.querySelectorAll('.download-options button'),
   printQrBtn: document.getElementById('print-qr-btn'),
+  downloadQrPng: document.getElementById('download-qr-png'),
+  downloadQrSvg: document.getElementById('download-qr-svg'),
   
   // QR Customizer Controls
   resetCustomizer: document.getElementById('reset-customizer'),
@@ -168,277 +87,148 @@ const elements = {
   logoInput: document.getElementById('logo-input'),
   removeLogoBtn: document.getElementById('remove-logo-btn'),
   
-  // Library List
+  // Library View
   refreshLibraryBtn: document.getElementById('refresh-library-btn'),
+  libraryCountText: document.getElementById('library-count-text'),
+  libSearchInput: document.getElementById('lib-search-input'),
   libraryLoading: document.getElementById('library-loading'),
   libraryEmpty: document.getElementById('library-empty'),
   libraryTableContainer: document.getElementById('library-table-container'),
   libraryTbody: document.getElementById('library-tbody'),
-
-  // Template Upload
-  templateFileInput: document.getElementById('template-file-input'),
-  templateStatusText: document.getElementById('template-status-text'),
-  templateUploadLabel: document.getElementById('template-upload-label'),
-  templateDeleteBtn: document.getElementById('template-delete-btn'),
-  togglePlaceholderGuideBtn: document.getElementById('toggle-placeholder-guide-btn'),
-  templatePlaceholderGuide: document.getElementById('template-placeholder-guide'),
   
-  // Public Viewer
-  publicViewLoading: document.getElementById('public-view-loading'),
-  publicViewError: document.getElementById('public-view-error'),
-  publicCertCard: document.getElementById('public-cert-card'),
-  btnPrintPublicSheet: document.getElementById('btn-print-public-sheet'),
-  btnViewPage1: document.getElementById('btn-view-page1'),
-  btnViewPage2: document.getElementById('btn-view-page2'),
-  certPage1: document.getElementById('cert-page1'),
-  certPage2: document.getElementById('cert-page2'),
-  
-  // Footer & Status
-  serverIpStatus: document.getElementById('server-ip-status'),
+  // Print Overlay
   printQrTarget: document.getElementById('print-qr-target'),
   printUrlText: document.getElementById('print-url-text')
 };
 
-// UTF-8 Base64 Helpers
-const utf8Base64 = {
-  encode(str) {
-    return btoa(unescape(encodeURIComponent(str)));
-  },
-  decode(str) {
-    return decodeURIComponent(escape(atob(str)));
-  }
-};
-
-// Key Compression Helpers (reduces payload size for QR codes)
-function compressCertificate(cert) {
-  const compressed = {};
-  for (const [fullKey, value] of Object.entries(cert)) {
-    const shortKey = keyMapping[fullKey] || fullKey;
-    compressed[shortKey] = value;
-  }
-  return compressed;
-}
-
-function decompressCertificate(compressed) {
-  const decompressed = {};
-  // Create reverse mapping
-  const reverseMapping = {};
-  for (const [fullKey, shortKey] of Object.entries(keyMapping)) {
-    reverseMapping[shortKey] = fullKey;
-  }
-  
-  for (const [shortKey, value] of Object.entries(compressed)) {
-    const fullKey = reverseMapping[shortKey] || shortKey;
-    decompressed[fullKey] = value;
-  }
-  return decompressed;
-}
-
-// -------------------------------------------------------------
-// App Initialization
-// -------------------------------------------------------------
+// Global App Initialization
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  loadGitHubConfig();
+  checkAuthSession();
   setupEventListeners();
-  checkEnvironmentAndRoute();
 });
 
-// Theme Toggle
+// Theme Management
 function initTheme() {
   const savedTheme = localStorage.getItem('theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcon(savedTheme);
 }
 
 function toggleTheme() {
   const currentTheme = document.documentElement.getAttribute('data-theme');
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', newTheme);
   localStorage.setItem('theme', newTheme);
-  showToast(`Giao diện: ${newTheme === 'dark' ? 'Tối' : 'Sáng'}`);
+  updateThemeIcon(newTheme);
+  
+  // Regenerate QR code to adjust colors if in default dark/light colors
+  if (state.activeQRUrl) {
+    generateQRCode();
+  }
 }
 
-// Env & Route Routing
-async function checkEnvironmentAndRoute() {
+function updateThemeIcon(theme) {
+  const toggleBtn = elements.themeToggle;
+  if (!toggleBtn) return;
+  if (theme === 'light') {
+    toggleBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+    `;
+  } else {
+    toggleBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.72" x2="5.64" y2="18.3"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+    `;
+  }
+}
+
+// GitHub Config Storage Helpers
+function loadGitHubConfig() {
+  const savedConfig = localStorage.getItem('rkv_github_config');
+  if (savedConfig) {
+    try {
+      state.githubConfig = { ...state.githubConfig, ...JSON.parse(savedConfig) };
+    } catch (e) {
+      console.error('Lỗi khi đọc config GitHub từ localStorage', e);
+    }
+  }
+  
+  // Fill inputs
+  elements.cfgOwner.value = state.githubConfig.owner;
+  elements.cfgRepo.value = state.githubConfig.repo;
+  elements.cfgBranch.value = state.githubConfig.branch;
+  elements.cfgFolder.value = state.githubConfig.folder;
+  elements.cfgToken.value = state.githubConfig.token;
+}
+
+function saveGitHubConfig() {
+  state.githubConfig.owner = elements.cfgOwner.value.trim();
+  state.githubConfig.repo = elements.cfgRepo.value.trim();
+  state.githubConfig.branch = elements.cfgBranch.value.trim();
+  state.githubConfig.folder = elements.cfgFolder.value.trim();
+  state.githubConfig.token = elements.cfgToken.value.trim();
+
+  localStorage.setItem('rkv_github_config', JSON.stringify(state.githubConfig));
+  showToast('Đã lưu thông số cấu hình GitHub');
+}
+
+// Check Connection to GitHub
+async function testGitHubConnection() {
+  const owner = elements.cfgOwner.value.trim();
+  const repo = elements.cfgRepo.value.trim();
+  const token = elements.cfgToken.value.trim();
+
+  if (!owner || !repo) {
+    showToast('Vui lòng điền thông tin Owner và Repository!', 'error');
+    return;
+  }
+
+  showToast('Đang kiểm tra kết nối tới GitHub...');
+  
+  const headers = { 'Accept': 'application/vnd.github+json' };
+  if (token) {
+    headers['Authorization'] = `token ${token}`;
+  }
+
   try {
-    const res = await fetch('/api/config');
-    if (res.ok) {
-      const data = await res.json();
-      elements.serverIpStatus.textContent = `http://${data.localIP}:${data.port}`;
-      state.isStaticMode = false;
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers });
+    if (response.ok) {
+      const data = await response.json();
+      showToast(`Kết nối thành công! Repo: ${data.full_name} (${data.private ? 'Riêng tư' : 'Công khai'})`);
     } else {
-      throw new Error();
+      const errData = await response.json().catch(() => ({}));
+      showToast(`Lỗi kết nối (${response.status}): ${errData.message || 'Không có quyền truy cập'}`, 'error');
     }
   } catch (err) {
-    state.isStaticMode = true;
-    elements.serverIpStatus.textContent = 'Chạy chế độ Tĩnh (GitHub Pages)';
-  }
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const id = urlParams.get('id');
-  const data = urlParams.get('data');
-
-  if (id || data) {
-    elements.loginView.classList.add('hidden');
-    elements.adminView.classList.add('hidden');
-    elements.publicView.classList.remove('hidden');
-    elements.logoutBtn.classList.add('hidden');
-    
-    // Always default to Page 1 view in public viewer
-    switchPublicViewPage('page1');
-    loadPublicCertificate(id, data);
-  } else {
-    checkAuthSession();
-  }
-}
-
-// -------------------------------------------------------------
-// Public View: Load & Render 2 Pages
-// -------------------------------------------------------------
-async function loadPublicCertificate(id, base64Data) {
-  elements.publicViewLoading.classList.remove('hidden');
-  elements.publicViewError.classList.add('hidden');
-  elements.publicCertCard.classList.add('hidden');
-
-  try {
-    let cert = null;
-
-    if (id) {
-      if (state.isStaticMode) throw new Error();
-      const res = await fetch(`/api/certificates/${id}`);
-      if (!res.ok) throw new Error();
-      
-      const resJson = await res.json();
-      cert = resJson.certificate;
-    } 
-    else if (base64Data) {
-      const jsonStr = utf8Base64.decode(base64Data);
-      const compressed = JSON.parse(jsonStr);
-      cert = decompressCertificate(compressed);
-    }
-
-    if (!cert) throw new Error();
-
-    // Populate Page 1 Elements
-    document.getElementById('lbl-report-no').textContent = cert.reportNo || 'N/A';
-    document.getElementById('lbl-object').textContent = cert.object || 'N/A';
-    document.getElementById('lbl-model').textContent = cert.model || 'N/A';
-    document.getElementById('lbl-serial').textContent = cert.serial || 'N/A';
-    document.getElementById('lbl-manufacturer').textContent = cert.manufacturer || 'N/A';
-    document.getElementById('lbl-mfg-date').textContent = cert.mfgDate || 'N/A';
-    document.getElementById('lbl-specs').textContent = cert.specs || 'N/A';
-    
-    // Ranges & Increments (Page 1)
-    document.getElementById('lbl-r-hc').textContent = cert.r_hc || 'N/A';
-    document.getElementById('lbl-i-hc').textContent = cert.i_hc || 'N/A';
-    document.getElementById('lbl-r-co').textContent = cert.r_co || 'N/A';
-    document.getElementById('lbl-i-co').textContent = cert.i_co || 'N/A';
-    document.getElementById('lbl-r-h2s').textContent = cert.r_h2s || 'N/A';
-    document.getElementById('lbl-i-h2s').textContent = cert.i_h2s || 'N/A';
-    document.getElementById('lbl-r-voc').textContent = cert.r_voc || 'N/A';
-    document.getElementById('lbl-i-voc').textContent = cert.i_voc || 'N/A';
-    document.getElementById('lbl-r-no2').textContent = cert.r_no2 || 'N/A';
-    document.getElementById('lbl-i-no2').textContent = cert.i_no2 || 'N/A';
-
-    document.getElementById('lbl-flow-rate').textContent = cert.flowRate || 'N/A';
-    document.getElementById('lbl-adj-method').textContent = cert.adjMethod || 'N/A';
-    document.getElementById('lbl-customer').textContent = cert.customer || 'N/A';
-    document.getElementById('lbl-env-condition').textContent = cert.envCondition || 'N/A';
-    document.getElementById('lbl-readj-due').textContent = cert.readjDue || 'N/A';
-    document.getElementById('lbl-sig-place-date').textContent = cert.reportPlaceDate || 'N/A';
-    document.getElementById('lbl-sig-tech-head').textContent = cert.techHead || 'N/A';
-
-    // Populate Gases table on Page 1
-    const gasTbody = document.getElementById('gas-table-tbody');
-    gasTbody.innerHTML = '';
-    
-    for (let i = 1; i <= 4; i++) {
-      const gId = cert[`gas_id_${i}`];
-      const gName = cert[`gas_name_${i}`];
-      const gAcc = cert[`gas_acc_${i}`];
-      const gDue = cert[`gas_due_${i}`];
-      
-      if (gId || gName || gAcc || gDue) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="text-bold">${gId || ''}</td>
-          <td>${gName || ''}</td>
-          <td>${gAcc || ''}</td>
-          <td>${gDue || ''}</td>
-        `;
-        gasTbody.appendChild(tr);
-      }
-    }
-
-    // Populate Page 2 Elements
-    document.getElementById('lbl-p2-object').textContent = cert.object || 'N/A';
-    document.getElementById('lbl-p2-model').textContent = cert.model || 'N/A';
-    document.getElementById('lbl-p2-serial').textContent = cert.serial || 'N/A';
-    document.getElementById('lbl-p2-manufacturer').textContent = cert.manufacturer || 'N/A';
-    
-    document.getElementById('lbl-chk-outside').textContent = cert.chkOutside || 'N/A';
-    document.getElementById('lbl-chk-tech').textContent = cert.chkTech || 'N/A';
-    document.getElementById('lbl-cal-env-hours').textContent = cert.calEnvHours || 'N/A';
-    document.getElementById('lbl-p2-cal-flow-rate').textContent = cert.calFlowRate || 'N/A';
-
-    // Populate Measurement Results (Page 2 Table)
-    const gases = ['hc', 'co', 'h2s', 'voc', 'no2'];
-    gases.forEach(g => {
-      document.getElementById(`lbl-s-m-${g}`).textContent = cert[`s_m_${g}`] || '-';
-      document.getElementById(`lbl-s-s-${g}`).textContent = cert[`s_s_${g}`] || '-';
-      document.getElementById(`lbl-s-r-${g}`).textContent = cert[`s_r_${g}`] || '-';
-      document.getElementById(`lbl-s-c-${g}`).textContent = cert[`s_c_${g}`] || '-';
-      document.getElementById(`lbl-s-d-${g}`).textContent = cert[`s_d_${g}`] || '-';
-      document.getElementById(`lbl-s-a-${g}`).textContent = cert[`s_a_${g}`] || '-';
-      document.getElementById(`lbl-s-al-${g}`).textContent = cert[`s_al_${g}`] || '-';
-    });
-
-    // Replacement parts multiline text (Page 2)
-    document.getElementById('lbl-replacement-parts').textContent = cert.replacementParts || 'Không thay thế / None';
-    document.getElementById('lbl-sig-operator').textContent = cert.operator || 'N/A';
-    document.getElementById('lbl-p2-footer-report-no').innerHTML = `Kèm theo GCN hiệu chỉnh số/<em>attached to Report No</em>: <strong>${cert.reportNo || 'N/A'}</strong> ngày ${cert.reportPlaceDate ? cert.reportPlaceDate.replace(/.*,\s*ngày\s*/, '') : '...'}`;
-
-    // Reveal Card
-    elements.publicViewLoading.classList.add('hidden');
-    elements.publicCertCard.classList.remove('hidden');
-  } catch (err) {
+    showToast('Lỗi mạng khi kiểm tra kết nối!', 'error');
     console.error(err);
-    elements.publicViewLoading.classList.add('hidden');
-    elements.publicViewError.classList.remove('hidden');
   }
 }
 
-function switchPublicViewPage(page) {
-  if (page === 'page1') {
-    elements.btnViewPage1.classList.add('active');
-    elements.btnViewPage2.classList.remove('active');
-    elements.certPage1.classList.remove('hidden');
-    elements.certPage2.classList.add('hidden');
-  } else {
-    elements.btnViewPage1.classList.remove('active');
-    elements.btnViewPage2.classList.add('active');
-    elements.certPage1.classList.add('hidden');
-    elements.certPage2.classList.remove('hidden');
-  }
-}
-
-// -------------------------------------------------------------
-// Authentication
-// -------------------------------------------------------------
+// Auth Session Helpers
 function checkAuthSession() {
   const isActive = sessionStorage.getItem('rkv_admin_session') === 'active';
   if (isActive) {
     elements.loginView.classList.add('hidden');
     elements.adminView.classList.remove('hidden');
-    elements.publicView.classList.add('hidden');
     elements.logoutBtn.classList.remove('hidden');
-    
-    resetCertificateForm();
     fetchLibraryFiles();
-    checkTemplateStatus();
   } else {
     elements.loginView.classList.remove('hidden');
     elements.adminView.classList.add('hidden');
-    elements.publicView.classList.add('hidden');
     elements.logoutBtn.classList.add('hidden');
   }
 }
@@ -448,433 +238,230 @@ function handleLogin(e) {
   const username = elements.loginUsername.value.trim();
   const password = elements.loginPassword.value.trim();
 
-  if (username === 'rkvcalib' && password === '7179') {
+  if (username === 'rkvcalib' && password === state.adminKey) {
     sessionStorage.setItem('rkv_admin_session', 'active');
-    showToast('Đăng nhập thành công!');
     checkAuthSession();
-    elements.loginUsername.value = '';
-    elements.loginPassword.value = '';
+    showToast('Đăng nhập admin thành công!');
+    elements.loginForm.reset();
   } else {
-    showToast('Tài khoản hoặc mật khẩu không chính xác!', 'error');
+    showToast('Sai tài khoản hoặc mật khẩu!', 'error');
   }
 }
 
 function handleLogout() {
   sessionStorage.removeItem('rkv_admin_session');
-  showToast('Đã đăng xuất.');
   checkAuthSession();
+  showToast('Đã đăng xuất hệ thống.');
 }
 
-// -------------------------------------------------------------
-// Admin Tab Actions & Library Fetching
-// -------------------------------------------------------------
-function switchTab(btn) {
-  const targetTab = btn.dataset.tab;
-  elements.tabButtons.forEach(b => b.classList.toggle('active', b === btn));
-  
-  if (targetTab === 'create') {
-    elements.tabCreate.classList.remove('hidden');
+// Navigation Tabs swapping
+function switchTab(clickedBtn) {
+  elements.tabButtons.forEach(btn => btn.classList.remove('active'));
+  clickedBtn.classList.add('active');
+
+  const targetTabId = clickedBtn.dataset.tab;
+  if (targetTabId === 'tab-upload') {
+    elements.tabUpload.classList.remove('hidden');
     elements.tabLibrary.classList.add('hidden');
   } else {
-    elements.tabCreate.classList.add('hidden');
+    elements.tabUpload.classList.add('hidden');
     elements.tabLibrary.classList.remove('hidden');
     fetchLibraryFiles();
   }
 }
 
-function switchFormSection(btn) {
-  const sec = btn.dataset.sec;
-  elements.formSecButtons.forEach(b => b.classList.toggle('active', b === btn));
+// File Selection & Drag Drop
+function handleFileSelect(file) {
+  if (!file) return;
+  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+    showToast('Hệ thống chỉ chấp nhận tệp định dạng PDF!', 'error');
+    return;
+  }
   
-  if (sec === 'page1') {
-    elements.formSecPage1.classList.remove('hidden');
-    elements.formSecPage2.classList.add('hidden');
-  } else {
-    elements.formSecPage1.classList.add('hidden');
-    elements.formSecPage2.classList.remove('hidden');
-  }
-}
-
-async function fetchLibraryFiles() {
-  elements.libraryLoading.classList.remove('hidden');
-  elements.libraryTableContainer.classList.add('hidden');
-  elements.libraryEmpty.classList.add('hidden');
-
-  try {
-    if (state.isStaticMode) {
-      const localData = localStorage.getItem('rkv_local_certs');
-      state.certificates = JSON.parse(localData || '[]');
-    } else {
-      const res = await fetch('/api/certificates', {
-        headers: { 'x-admin-key': state.adminKey }
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      state.certificates = data.certificates || [];
-    }
-
-    elements.libraryLoading.classList.add('hidden');
-
-    if (state.certificates.length === 0) {
-      elements.libraryEmpty.classList.remove('hidden');
-    } else {
-      state.certificates.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      renderLibraryTable();
-      elements.libraryTableContainer.classList.remove('hidden');
-    }
-  } catch (err) {
-    elements.libraryLoading.classList.add('hidden');
-    elements.libraryEmpty.classList.remove('hidden');
-    showToast('Không thể kết nối lấy thư viện', 'error');
-  }
-}
-
-function renderLibraryTable() {
-  elements.libraryTbody.innerHTML = '';
-  
-  state.certificates.forEach(cert => {
-    const tr = document.createElement('tr');
-    const date = new Date(cert.createdAt);
-    const dateString = date.toLocaleDateString('vi-VN', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    });
-
-    tr.innerHTML = `
-      <td><strong>${cert.reportNo}</strong></td>
-      <td>${cert.object}</td>
-      <td class="text-bold">${cert.model}</td>
-      <td>${cert.customer}</td>
-      <td>${dateString}</td>
-      <td class="actions-col">
-        <div class="lib-action-buttons">
-          <button class="primary-btn lib-action-btn btn-view">Xem</button>
-          <button class="secondary-btn lib-action-btn btn-print-qr">In QR</button>
-          <button class="remove-btn lib-action-btn btn-delete">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem;height:0.8rem;">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-          </button>
-        </div>
-      </td>
-    `;
-
-    tr.querySelector('.btn-view').addEventListener('click', () => {
-      const url = state.isStaticMode ? cert.url : `${window.location.origin}/?id=${cert.id}`;
-      window.open(url, '_blank');
-    });
-
-    tr.querySelector('.btn-print-qr').addEventListener('click', () => {
-      state.activeQRUrl = state.isStaticMode ? cert.url : `${window.location.origin}/?id=${cert.id}`;
-      state.activeCertName = cert.reportNo;
-      generateQRCode(() => printQRCode());
-    });
-
-    tr.querySelector('.btn-delete').addEventListener('click', async () => {
-      if (confirm(`Bạn có chắc chắn muốn xóa báo cáo số "${cert.reportNo}"?`)) {
-        await deleteCertificate(cert.id);
-      }
-    });
-
-    elements.libraryTbody.appendChild(tr);
-  });
-}
-
-async function deleteCertificate(id) {
-  try {
-    if (state.isStaticMode) {
-      let localCerts = JSON.parse(localStorage.getItem('rkv_local_certs') || '[]');
-      localCerts = localCerts.filter(c => c.id !== id);
-      localStorage.setItem('rkv_local_certs', JSON.stringify(localCerts));
-      showToast('Đã xóa chứng chỉ!');
-      fetchLibraryFiles();
-    } else {
-      const res = await fetch(`/api/certificates/${id}`, {
-        method: 'DELETE',
-        headers: { 'x-admin-key': state.adminKey }
-      });
-      if (!res.ok) throw new Error();
-      showToast('Đã xóa chứng chỉ khỏi máy chủ!');
-      fetchLibraryFiles();
-    }
-  } catch (err) {
-    showToast('Xóa thất bại', 'error');
-  }
-}
-
-// -------------------------------------------------------------
-// Form Operations & QR Creation
-// -------------------------------------------------------------
-function readFormValues() {
-  const data = {};
-  let isValid = true;
-
-  formFieldIds.forEach(id => {
-    const input = document.getElementById(`inp-${id}`);
-    const val = input.value.trim();
-    
-    // Convert hyphened IDs to camelCase for state mapping
-    const stateKey = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-    data[stateKey] = val;
-
-    // Check required fields (except Gas 4 which can be empty)
-    if (input.hasAttribute('required') && !val) {
-      input.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
-      isValid = false;
-    } else {
-      input.style.backgroundColor = '';
-    }
-  });
-
-  return { data, isValid };
-}
-
-async function handleFormSubmit() {
-  const { data, isValid } = readFormValues();
-
-  if (!isValid) {
-    showToast('Vui lòng điền đầy đủ thông tin chứng chỉ các trang!', 'error');
+  if (file.size > 25 * 1024 * 1024) {
+    showToast('Dung lượng tệp vượt quá giới hạn 25MB!', 'error');
     return;
   }
 
-  elements.qrSpinner.classList.remove('hidden');
-
-  try {
-    if (state.isStaticMode) {
-      // Static Base64 payload (compressed keys)
-      const compressedData = compressCertificate(data);
-      const base64Data = utf8Base64.encode(JSON.stringify(compressedData));
-      const certUrl = `${window.location.origin}${window.location.pathname}?data=${base64Data}`;
-      
-      // Save locally
-      let localCerts = JSON.parse(localStorage.getItem('rkv_local_certs') || '[]');
-      const certId = `RKV-${Date.now()}`;
-      localCerts.push({
-        id: certId,
-        createdAt: new Date().toISOString(),
-        url: certUrl,
-        ...data
-      });
-      localStorage.setItem('rkv_local_certs', JSON.stringify(localCerts));
-
-      state.activeQRUrl = certUrl;
-      state.activeCertName = data.reportNo;
-      generateQRCode();
-      showToast('Đã lưu offline & xuất mã QR!');
-    } 
-    else {
-      // Local Server DB
-      const res = await fetch('/api/certificates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': state.adminKey
-        },
-        body: JSON.stringify(data)
-      });
-
-      if (!res.ok) throw new Error();
-      const response = await res.json();
-      
-      if (response.success) {
-        state.activeQRUrl = response.url;
-        state.activeCertName = response.certificate.reportNo;
-        generateQRCode();
-        showToast('Đã lưu lên máy chủ & xuất mã QR!');
-      } else {
-        throw new Error(response.error);
-      }
-    }
-  } catch (err) {
-    showToast('Lỗi lưu trữ dữ liệu', 'error');
-    elements.qrSpinner.classList.add('hidden');
-  }
-}
-
-function resetCertificateForm() {
-  elements.certForm.reset();
-  formFieldIds.forEach(id => {
-    const input = document.getElementById(`inp-${id}`);
-    if (input) input.style.backgroundColor = '';
-  });
+  state.selectedFile = file;
+  elements.fileDisplayName.textContent = file.name;
+  elements.fileDisplaySize.textContent = formatBytes(file.size);
   
-  state.activeQRUrl = '';
-  state.activeCertName = '';
-  clearQRCodeCanvas();
+  elements.dropZone.classList.add('hidden');
+  elements.selectedFileCard.classList.remove('hidden');
+  elements.uploadProcessBtn.removeAttribute('disabled');
 }
 
-// -------------------------------------------------------------
-// SheetJS Excel Export (Template-based or fallback)
-// -------------------------------------------------------------
+function removeSelectedFile() {
+  state.selectedFile = null;
+  elements.dropZone.classList.remove('hidden');
+  elements.selectedFileCard.classList.add('hidden');
+  elements.uploadProcessBtn.setAttribute('disabled', 'true');
+  resetProgressBar();
+}
 
-/**
- * Build a flat data map of all placeholder -> value pairs.
- * Keys match the {{placeholder}} names listed in the guide.
- */
-function buildPlaceholderMap(data) {
+function resetProgressBar() {
+  elements.uploadProgressContainer.classList.add('hidden');
+  elements.uploadProgressBar.style.width = '0%';
+  elements.uploadStatusPercent.textContent = '0%';
+  elements.uploadStatusText.textContent = 'Sẵn sàng';
+}
+
+function runFakeProgressBar(onDone) {
+  elements.uploadProgressContainer.classList.remove('hidden');
+  let currentWidth = 0;
+  
+  const interval = setInterval(() => {
+    currentWidth += Math.random() * 15;
+    if (currentWidth >= 90) {
+      currentWidth = 90;
+      clearInterval(interval);
+    }
+    elements.uploadProgressBar.style.width = `${Math.round(currentWidth)}%`;
+    elements.uploadStatusPercent.textContent = `${Math.round(currentWidth)}%`;
+  }, 100);
+
   return {
-    reportNo: data.reportNo || '',
-    object: data.object || '',
-    model: data.model || '',
-    serial: data.serial || '',
-    manufacturer: data.manufacturer || '',
-    mfgDate: data.mfgDate || '',
-    specs: data.specs || '',
-    rHc: data.rHc || '', iHc: data.iHc || '',
-    rCo: data.rCo || '', iCo: data.iCo || '',
-    rH2s: data.rH2s || '', iH2s: data.iH2s || '',
-    rVoc: data.rVoc || '', iVoc: data.iVoc || '',
-    rNo2: data.rNo2 || '', iNo2: data.iNo2 || '',
-    flowRate: data.flowRate || '',
-    adjMethod: data.adjMethod || '',
-    customer: data.customer || '',
-    envCondition: data.envCondition || '',
-    readjDue: data.readjDue || '',
-    reportPlaceDate: data.reportPlaceDate || '',
-    techHead: data.techHead || '',
-    operator: data.operator || '',
-    gasId1: data.gasId1 || '', gasName1: data.gasName1 || '', gasAcc1: data.gasAcc1 || '', gasDue1: data.gasDue1 || '',
-    gasId2: data.gasId2 || '', gasName2: data.gasName2 || '', gasAcc2: data.gasAcc2 || '', gasDue2: data.gasDue2 || '',
-    gasId3: data.gasId3 || '', gasName3: data.gasName3 || '', gasAcc3: data.gasAcc3 || '', gasDue3: data.gasDue3 || '',
-    gasId4: data.gasId4 || '', gasName4: data.gasName4 || '', gasAcc4: data.gasAcc4 || '', gasDue4: data.gasDue4 || '',
-    chkOutside: data.chkOutside || '',
-    chkTech: data.chkTech || '',
-    calEnvHours: data.calEnvHours || '',
-    calFlowRate: data.calFlowRate || '',
-    sMHc: data.sMHc || '', sMCo: data.sMCo || '', sMH2s: data.sMH2s || '', sMVoc: data.sMVoc || '', sMNo2: data.sMNo2 || '',
-    sSHc: data.sSHc || '', sSCo: data.sSCo || '', sSH2s: data.sSH2s || '', sSVoc: data.sSVoc || '', sSNo2: data.sSNo2 || '',
-    sRHc: data.sRHc || '', sRCo: data.sRCo || '', sRH2s: data.sRH2s || '', sRVoc: data.sRVoc || '', sRNo2: data.sRNo2 || '',
-    sCHc: data.sCHc || '', sCCo: data.sCCo || '', sCH2s: data.sCH2s || '', sCVoc: data.sCVoc || '', sCNo2: data.sCNo2 || '',
-    sDHc: data.sDHc || '', sDCo: data.sDCo || '', sDH2s: data.sDH2s || '', sDVoc: data.sDVoc || '', sDNo2: data.sDNo2 || '',
-    sAHc: data.sAHc || '', sACo: data.sACo || '', sAH2s: data.sAH2s || '', sAVoc: data.sAVoc || '', sANo2: data.sANo2 || '',
-    sAlHc: data.sAlHc || '', sAlCo: data.sAlCo || '', sAlH2s: data.sAlH2s || '', sAlVoc: data.sAlVoc || '', sAlNo2: data.sAlNo2 || '',
-    replacementParts: data.replacementParts || '',
-    signedStamp: 'ĐÃ KÝ điện tử (SIGNED)'
+    finish() {
+      clearInterval(interval);
+      elements.uploadProgressBar.style.width = '100%';
+      elements.uploadStatusPercent.textContent = '100%';
+      elements.uploadStatusText.textContent = 'Hoàn tất tải lên!';
+      setTimeout(() => {
+        elements.uploadProgressContainer.classList.add('hidden');
+        if (onDone) onDone();
+      }, 500);
+    },
+    error(msg) {
+      clearInterval(interval);
+      elements.uploadProgressBar.style.width = '0%';
+      elements.uploadStatusPercent.textContent = 'Lỗi';
+      elements.uploadStatusText.textContent = msg;
+      elements.uploadProgressBar.style.background = 'var(--danger)';
+    }
   };
 }
 
-/**
- * Replace all {{key}} occurrences in every text cell of the workbook.
- */
-function fillTemplatePlaceholders(wb, placeholders) {
-  wb.SheetNames.forEach(sheetName => {
-    const ws = wb.Sheets[sheetName];
-    Object.keys(ws).forEach(cellAddr => {
-      if (cellAddr.startsWith('!')) return;
-      const cell = ws[cellAddr];
-      if (cell && cell.t === 's' && typeof cell.v === 'string') {
-        let val = cell.v;
-        let changed = false;
-        for (const [key, replacement] of Object.entries(placeholders)) {
-          const regex = new RegExp(`\\{\\{${key}\\}}`, 'g');
-          if (regex.test(val)) {
-            val = val.replace(new RegExp(`\\{\\{${key}\\}}`, 'g'), replacement);
-            changed = true;
-          }
-        }
-        if (changed) {
-          cell.v = val;
-          cell.w = val; // update formatted text too
-        }
-      }
-    });
+// Convert File to Base64 String
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      // FileReader output has prefix: data:application/pdf;base64,...
+      const base64String = reader.result.split(',')[1];
+      resolve(base64String);
+    };
+    reader.onerror = error => reject(error);
   });
-  return wb;
 }
 
-async function handleExcelExport() {
-  const { data } = readFormValues();
-  if (!data.reportNo) {
-    showToast('Vui lòng điền số báo cáo trước khi xuất Excel!', 'error');
+// Upload File via GitHub REST API
+async function uploadFileToGitHub() {
+  const config = state.githubConfig;
+  const file = state.selectedFile;
+
+  if (!file) {
+    showToast('Chưa chọn tệp PDF nào!', 'error');
     return;
   }
 
-  const placeholders = buildPlaceholderMap(data);
-  const safeReportNo = data.reportNo.replace(/[^a-zA-Z0-9_-]/g, '_');
-
-  // ---- Try template-based export first (IndexedDB – works on GitHub Pages) ----
-  try {
-    const arrayBuffer = await templateStore.load();
-    if (arrayBuffer) {
-      const wb = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true, cellFormula: true });
-      fillTemplatePlaceholders(wb, placeholders);
-      XLSX.writeFile(wb, `RIKEN_Report_${safeReportNo}.xlsx`);
-      showToast('Đã xuất Excel từ template thành công! ✅');
-      return;
-    }
-  } catch (err) {
-    console.warn('Template load from browser failed, using built-in export:', err);
+  if (!config.token) {
+    showToast('Vui lòng cấu hình GitHub Personal Access Token trước!', 'error');
+    elements.githubConfigPanel.classList.remove('hidden');
+    return;
   }
 
-  // ---- Fallback: built-in generated sheet ----
+  elements.uploadProcessBtn.setAttribute('disabled', 'true');
+  elements.removeFileBtn.setAttribute('disabled', 'true');
+  elements.uploadStatusText.textContent = 'Đang chuẩn bị mã hoá tệp...';
+  
+  const progress = runFakeProgressBar(async () => {
+    elements.uploadProcessBtn.removeAttribute('disabled');
+    elements.removeFileBtn.removeAttribute('disabled');
+  });
+
   try {
-    const wsData = [
-      ["CÔNG TY TNHH CÔNG NGHỆ MÁY ĐO KHÍ RIKEN VIỆT", "", "", ""],
-      ["GIẤY CHỨNG NHẬN HIỆU CHỈNH (ADJUSTMENT REPORT)", "", "", ""],
-      ["Giấy CNHC số / Report No:", data.reportNo, "", ""],
-      ["", "", "", ""],
-      ["TRANG 1: THÔNG TIN CHUNG", "", "", ""],
-      ["Tên thiết bị (Object):", data.object, "", ""],
-      ["Kiểu (Model):", data.model, "Số máy (Serial Number):", data.serial],
-      ["Nơi chế tạo (Manufacturer):", data.manufacturer, "Ngày sản xuất (Mfg. Date):", data.mfgDate],
-      ["Đặc trưng kỹ thuật (Specifications):", data.specs, "", ""],
-      ["", "", "", ""],
-      ["PHẠM VI ĐO (MEASURING RANGE)", "", "ĐỘ CHIA ĐỘ (INCREMENT VALUE)", ""],
-      ["HC Range:", data.rHc, "HC Increment:", data.iHc],
-      ["CO Range:", data.rCo, "CO Increment:", data.iCo],
-      ["H2S Range:", data.rH2s, "H2S Increment:", data.iH2s],
-      ["VOC Range:", data.rVoc, "VOC Increment:", data.iVoc],
-      ["NO2 Range:", data.rNo2, "NO2 Increment:", data.iNo2],
-      ["", "", "", ""],
-      ["Lưu lượng (Flow rate):", data.flowRate, "", ""],
-      ["Phương pháp hiệu chỉnh:", data.adjMethod, "", ""],
-      ["Đơn vị sử dụng (Customer):", data.customer, "", ""],
-      ["", "", "", ""],
-      ["KHÍ CHUẨN SỬ DỤNG (STANDARD GASES USED)", "", "", ""],
-      ["Mã số/ID (Lot)", "Khí chuẩn (Standard gases)", "Độ chính xác (Accuracy)", "Hiệu lực (Due date)"],
-      [data.gasId1, data.gasName1, data.gasAcc1, data.gasDue1],
-      [data.gasId2, data.gasName2, data.gasAcc2, data.gasDue2],
-      [data.gasId3, data.gasName3, data.gasAcc3, data.gasDue3],
-      [data.gasId4, data.gasName4, data.gasAcc4, data.gasDue4],
-      ["", "", "", ""],
-      ["Điều kiện hiệu chỉnh:", data.envCondition, "Ngày hiệu chỉnh đề nghị:", data.readjDue],
-      ["Nơi & Ngày lập:", data.reportPlaceDate, "Phụ trách kỹ thuật:", data.techHead],
-      ["Trạng thái ký tên:", "ĐÃ KÝ điện tử (SIGNED)", "", ""],
-      ["", "", "", ""],
-      ["TRANG 2: KẾT QUẢ ĐO CHI TIẾT", "", "", ""],
-      ["1. Kiểm tra bên ngoài (Check outside):", data.chkOutside, "", ""],
-      ["2. Kiểm tra kỹ thuật (Technical inspection):", data.chkTech, "", ""],
-      ["3. Kiểm tra đo lường: Thời gian lưu mẫu:", data.calEnvHours, "Lưu lượng khí vào máy:", data.calFlowRate],
-      ["", "", "", ""],
-      ["CHI TIẾT ĐO LƯỜNG CẢM BIẾN (SENSORS DETAILED VALUES)", "", "", ""],
-      ["Thông số", "HC (%LEL)", "CO (ppm)", "H2S (ppm)", "VOC (ppm)", "NO2 (ppm)"],
-      ["Cảm biến Model", data.sMHc, data.sMCo, data.sMH2s, data.sMVoc, data.sMNo2],
-      ["Cảm biến Serial", data.sSHc, data.sSCo, data.sSH2s, data.sSVoc, data.sSNo2],
-      ["Thang đo (Range)", data.sRHc, data.sRCo, data.sRH2s, data.sRVoc, data.sRNo2],
-      ["Nồng độ khí chuẩn", data.sCHc, data.sCCo, data.sCH2s, data.sCVoc, data.sCNo2],
-      ["Giá trị hiển thị", data.sDHc, data.sDCo, data.sDH2s, data.sDVoc, data.sDNo2],
-      ["Giá trị điều chỉnh", data.sAHc, data.sACo, data.sAH2s, data.sAVoc, data.sANo2],
-      ["Giá trị cảnh báo", data.sAlHc, data.sAlCo, data.sAlH2s, data.sAlVoc, data.sAlNo2],
-      ["", "", "", ""],
-      ["Phụ tùng đã được thay thế (Replacement parts):", data.replacementParts, "", ""],
-      ["Người thực hiện (Operator):", data.operator, "Trạng thái ký tên:", "ĐÃ KÝ điện tử (SIGNED)"]
-    ];
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    ws['!cols'] = [40, 25, 25, 25].map(w => ({ wch: w }));
-    XLSX.utils.book_append_sheet(wb, ws, 'Adjustment Report');
-    XLSX.writeFile(wb, `RIKEN_Report_${safeReportNo}.xlsx`);
-    showToast('Đã xuất Excel (built-in) thành công!');
+    const base64Content = await fileToBase64(file);
+    
+    // Check if file already exists on GitHub to handle overwrite / SHA requirement
+    // Path: RIKEN VIET/filename.pdf
+    const cleanFolderName = config.folder.trim().replace(/\/+$/, '');
+    const cleanFileName = file.name.trim();
+    const filePath = cleanFolderName ? `${cleanFolderName}/${cleanFileName}` : cleanFileName;
+    
+    elements.uploadStatusText.textContent = 'Đang tải tệp lên GitHub...';
+    
+    // Check existing file SHA first
+    let sha = '';
+    const checkResp = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${encodeURIComponent(filePath)}?ref=${config.branch}`, {
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': `token ${config.token}`
+      }
+    });
+
+    if (checkResp.ok) {
+      const checkData = await checkResp.json();
+      sha = checkData.sha; // Save SHA to update file
+    }
+
+    // Gửi request PUT lên GitHub API để upload
+    const payload = {
+      message: `Upload PDF Calibration Certificate: ${cleanFileName}`,
+      content: base64Content,
+      branch: config.branch
+    };
+    if (sha) {
+      payload.sha = sha; // Cần thiết khi update ghi đè
+    }
+
+    const uploadResp = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${encodeURIComponent(filePath)}`, {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': `token ${config.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (uploadResp.ok) {
+      progress.finish();
+      showToast('Đã lưu trữ file PDF thành công lên GitHub! 🎉');
+      
+      // Tạo URL của file PDF trên GitHub Pages
+      // Định dạng: https://yangkoi.github.io/rkv_temp_calib/RIKEN%20VIET/filename.pdf
+      const pagesUrl = `https://${config.owner.toLowerCase()}.github.io/${config.repo}/${encodeURI(filePath)}`;
+      
+      state.activeQRUrl = pagesUrl;
+      state.activeCertName = cleanFileName;
+      
+      generateQRCode(() => {
+        elements.copyLinkBtn.removeAttribute('disabled');
+        elements.printQrBtn.removeAttribute('disabled');
+        elements.downloadQrPng.removeAttribute('disabled');
+        elements.downloadQrSvg.removeAttribute('disabled');
+      });
+
+      removeSelectedFile();
+    } else {
+      const err = await uploadResp.json().catch(() => ({}));
+      progress.error(err.message || 'Lỗi từ GitHub API');
+      showToast(`Upload thất bại (${uploadResp.status}): ${err.message || 'Không xác định'}`, 'error');
+      elements.uploadProcessBtn.removeAttribute('disabled');
+      elements.removeFileBtn.removeAttribute('disabled');
+    }
   } catch (err) {
+    progress.error('Lỗi kết nối mạng');
+    showToast('Lỗi mạng, không thể kết nối tới GitHub!', 'error');
     console.error(err);
-    showToast('Lỗi khi xuất tệp Excel', 'error');
+    elements.uploadProcessBtn.removeAttribute('disabled');
+    elements.removeFileBtn.removeAttribute('disabled');
   }
 }
 
-// -------------------------------------------------------------
-// QR Canvas Operations
-// -------------------------------------------------------------
+// QR Code Canvas Operations
 function generateQRCode(callback = null) {
   const url = state.activeQRUrl;
   if (!url) {
@@ -884,10 +471,6 @@ function generateQRCode(callback = null) {
 
   elements.qrSpinner.classList.remove('hidden');
   elements.qrTargetUrl.textContent = url;
-  
-  elements.copyLinkBtn.removeAttribute('disabled');
-  elements.downloadQrBtn.removeAttribute('disabled');
-  elements.printQrBtn.removeAttribute('disabled');
 
   const canvas = elements.qrCanvas;
   const size = state.qrSettings.size;
@@ -921,80 +504,53 @@ function generateQRCode(callback = null) {
 function drawLogoOnQR(canvas) {
   const ctx = canvas.getContext('2d');
   const size = canvas.width;
-  const logo = state.qrSettings.logoImg;
   
-  const logoSize = size * 0.18;
-  const cx = size / 2;
-  const cy = size / 2;
+  // Tỷ lệ logo thích hợp là 18-20% kích thước QR code
+  const logoSize = Math.floor(size * 0.2);
+  const logoPos = (size - logoSize) / 2;
 
-  ctx.save();
+  // Vẽ nền trắng bo góc nhẹ cho logo
   ctx.fillStyle = state.qrSettings.bgColor;
   ctx.beginPath();
-  const maskSize = logoSize + 10;
-  if (typeof ctx.roundRect === 'function') {
-    ctx.roundRect(cx - maskSize / 2, cy - maskSize / 2, maskSize, maskSize, 8);
-  } else {
-    ctx.rect(cx - maskSize / 2, cy - maskSize / 2, maskSize, maskSize);
-  }
+  const radius = 6;
+  ctx.roundRect(logoPos - 3, logoPos - 3, logoSize + 6, logoSize + 6, radius);
   ctx.fill();
 
-  ctx.strokeStyle = '#e2e8f0';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  ctx.beginPath();
-  const logoRadius = 6;
-  if (typeof ctx.roundRect === 'function') {
-    ctx.roundRect(cx - logoSize / 2, cy - logoSize / 2, logoSize, logoSize, logoRadius);
-  } else {
-    ctx.rect(cx - logoSize / 2, cy - logoSize / 2, logoSize, logoSize);
-  }
-  ctx.clip();
-  ctx.drawImage(logo, cx - logoSize / 2, cy - logoSize / 2, logoSize, logoSize);
-  ctx.restore();
+  // Vẽ logo
+  ctx.drawImage(state.qrSettings.logoImg, logoPos, logoPos, logoSize, logoSize);
 }
 
 function clearQRCodeCanvas() {
   const canvas = elements.qrCanvas;
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-card').trim() || '#1e293b';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  elements.qrTargetUrl.textContent = 'Chưa có liên kết';
   
-  elements.qrTargetUrl.textContent = 'Chưa tạo chứng chỉ';
   elements.copyLinkBtn.setAttribute('disabled', 'true');
-  elements.downloadQrBtn.setAttribute('disabled', 'true');
   elements.printQrBtn.setAttribute('disabled', 'true');
+  elements.downloadQrPng.setAttribute('disabled', 'true');
+  elements.downloadQrSvg.setAttribute('disabled', 'true');
 }
 
-function resetCustomizerSettings() {
-  state.qrSettings.fgColor = '#0f172a';
-  state.qrSettings.bgColor = '#ffffff';
-  state.qrSettings.logoImg = null;
-  state.qrSettings.logoName = '';
-
-  elements.qrColorFg.value = '#0f172a';
-  elements.qrColorBg.value = '#ffffff';
-  elements.logoInput.value = '';
-  elements.removeLogoBtn.classList.add('hidden');
-  elements.uploadLogoBtn.textContent = 'Chèn Logo';
-
-  generateQRCode();
-  showToast('Đã khôi phục cài đặt mã QR');
-}
-
+// Copy URL to Clipboard
 function copyLinkToClipboard() {
   const url = state.activeQRUrl;
   if (!url) return;
 
-  navigator.clipboard.writeText(url)
-    .then(() => showToast('Đã sao chép liên kết chứng chỉ!'))
-    .catch(() => showToast('Sao chép liên kết thất bại', 'error'));
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('Đã sao chép liên kết vào bộ nhớ tạm!');
+  }).catch(err => {
+    showToast('Lỗi khi sao chép liên kết', 'error');
+  });
 }
 
+// Downloader options
 function downloadQRCode(format) {
   const url = state.activeQRUrl;
   if (!url) return;
 
-  const fileName = `qr_${state.activeCertName.toLowerCase().replace(/[^a-z0-9]/g, '_') || 'cert'}`;
+  const fileName = `qr_${state.activeCertName.toLowerCase().replace(/[^a-z0-9]/g, '_') || 'pdf'}`;
 
   if (format === 'png') {
     const dataUrl = elements.qrCanvas.toDataURL('image/png');
@@ -1002,7 +558,7 @@ function downloadQRCode(format) {
     a.href = dataUrl;
     a.download = `${fileName}.png`;
     a.click();
-    showToast('Đã tải PNG');
+    showToast('Đã tải ảnh QR PNG thành công');
   } 
   else if (format === 'svg') {
     QRCode.toString(url, {
@@ -1022,13 +578,14 @@ function downloadQRCode(format) {
       a.download = `${fileName}.svg`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-      showToast('Đã tải SVG');
+      showToast('Đã tải tệp QR dạng SVG');
     }).catch(err => {
       showToast('Lỗi tạo file SVG', 'error');
     });
   }
 }
 
+// Print QR Code View
 function printQRCode() {
   const url = state.activeQRUrl;
   if (!url) return;
@@ -1048,38 +605,254 @@ function printQRCode() {
   window.print();
 }
 
-// -------------------------------------------------------------
-// Event Wire-up
-// -------------------------------------------------------------
+// QR customizer logic
+function resetCustomizerSettings() {
+  elements.qrColorFg.value = '#0f172a';
+  elements.qrColorBg.value = '#ffffff';
+  state.qrSettings.fgColor = '#0f172a';
+  state.qrSettings.bgColor = '#ffffff';
+  
+  state.qrSettings.logoImg = null;
+  state.qrSettings.logoName = '';
+  elements.uploadLogoBtn.textContent = 'Chèn Logo';
+  elements.removeLogoBtn.classList.add('hidden');
+  elements.logoInput.value = '';
+
+  generateQRCode();
+  showToast('Đã đặt lại cấu hình mã QR');
+}
+
+// GitHub Library Storage loading
+let libraryFilesList = []; // Global cache for search filter
+
+async function fetchLibraryFiles() {
+  const config = state.githubConfig;
+  
+  if (!config.token) {
+    elements.libraryLoading.classList.add('hidden');
+    elements.libraryEmpty.classList.remove('hidden');
+    elements.libraryTableContainer.classList.add('hidden');
+    elements.libraryCountText.textContent = 'Vui lòng cung cấp GitHub Token trong phần cấu hình.';
+    return;
+  }
+
+  elements.libraryLoading.classList.remove('hidden');
+  elements.libraryEmpty.classList.add('hidden');
+  elements.libraryTableContainer.classList.add('hidden');
+  elements.libraryCountText.textContent = 'Đang tải dữ liệu tệp từ GitHub...';
+
+  const cleanFolderName = config.folder.trim().replace(/\/+$/, '');
+  
+  try {
+    const resp = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${encodeURIComponent(cleanFolderName)}?ref=${config.branch}`, {
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': `token ${config.token}`
+      }
+    });
+
+    if (resp.ok) {
+      const data = await resp.json();
+      
+      // Chỉ lọc file PDF (.pdf)
+      libraryFilesList = (Array.isArray(data) ? data : []).filter(item => {
+        return item.type === 'file' && item.name.toLowerCase().endsWith('.pdf');
+      });
+
+      renderLibraryTable(libraryFilesList);
+    } else {
+      elements.libraryLoading.classList.add('hidden');
+      elements.libraryEmpty.classList.remove('hidden');
+      elements.libraryCountText.textContent = 'Không tìm thấy thư mục lưu trữ hoặc cấu hình sai.';
+    }
+  } catch (err) {
+    elements.libraryLoading.classList.add('hidden');
+    elements.libraryEmpty.classList.remove('hidden');
+    elements.libraryCountText.textContent = 'Lỗi mạng khi tải dữ liệu thư viện.';
+    console.error(err);
+  }
+}
+
+function renderLibraryTable(files) {
+  elements.libraryLoading.classList.add('hidden');
+  
+  if (files.length === 0) {
+    elements.libraryEmpty.classList.remove('hidden');
+    elements.libraryTableContainer.classList.add('hidden');
+    elements.libraryCountText.textContent = 'Không có tệp PDF nào trong thư mục RIKEN VIET.';
+    return;
+  }
+
+  elements.libraryEmpty.classList.add('hidden');
+  elements.libraryTableContainer.classList.remove('hidden');
+  elements.libraryCountText.textContent = `Tìm thấy ${files.length} tệp PDF trong kho lưu trữ GitHub`;
+
+  elements.libraryTbody.innerHTML = '';
+  
+  files.forEach(file => {
+    const tr = document.createElement('tr');
+    
+    // Construct public link pages
+    const pagesUrl = `https://${state.githubConfig.owner.toLowerCase()}.github.io/${state.githubConfig.repo}/${encodeURI(file.path)}`;
+    
+    tr.innerHTML = `
+      <td>
+        <div style="font-weight:600;color:var(--text-primary);max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${file.name}">
+          ${file.name}
+        </div>
+      </td>
+      <td>${formatBytes(file.size)}</td>
+      <td class="actions-cell">
+        <a href="${pagesUrl}" target="_blank" class="outline-btn" style="text-decoration:none;padding: 4px 10px;font-size:12px;display:inline-flex;align-items:center;height:28px;">Xem</a>
+        <button class="outline-btn gen-qr-btn" data-url="${pagesUrl}" data-name="${file.name}" style="padding: 4px 10px;font-size:12px;height:28px;">Mã QR</button>
+        <button class="danger-btn delete-file-btn" data-path="${file.path}" data-sha="${file.sha}" data-name="${file.name}">Xoá</button>
+      </td>
+    `;
+    elements.libraryTbody.appendChild(tr);
+  });
+
+  // Bind library item actions
+  trActionsBind();
+}
+
+function trActionsBind() {
+  // Action "Mã QR"
+  elements.libraryTbody.querySelectorAll('.gen-qr-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const url = btn.dataset.url;
+      const name = btn.dataset.name;
+      
+      state.activeQRUrl = url;
+      state.activeCertName = name;
+      
+      // Chuyển về tab Upload & QR
+      const uploadTabBtn = Array.from(elements.tabButtons).find(t => t.dataset.tab === 'tab-upload');
+      if (uploadTabBtn) switchTab(uploadTabBtn);
+
+      generateQRCode(() => {
+        elements.copyLinkBtn.removeAttribute('disabled');
+        elements.printQrBtn.removeAttribute('disabled');
+        elements.downloadQrPng.removeAttribute('disabled');
+        elements.downloadQrSvg.removeAttribute('disabled');
+      });
+      
+      showToast(`Đã xuất mã QR cho tệp ${name}`);
+    });
+  });
+
+  // Action "Xoá file"
+  elements.libraryTbody.querySelectorAll('.delete-file-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const path = btn.dataset.path;
+      const sha = btn.dataset.sha;
+      const name = btn.dataset.name;
+
+      if (!confirm(`Bạn có chắc muốn xoá file "${name}" vĩnh viễn khỏi kho lưu trữ GitHub?`)) {
+        return;
+      }
+
+      showToast('Đang tiến hành xoá tệp trên GitHub...');
+      const config = state.githubConfig;
+
+      try {
+        const resp = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${encodeURIComponent(path)}`, {
+          method: 'DELETE',
+          headers: {
+            'Accept': 'application/vnd.github+json',
+            'Authorization': `token ${config.token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `Delete PDF Calibration Certificate: ${name}`,
+            sha: sha,
+            branch: config.branch
+          })
+        });
+
+        if (resp.ok) {
+          showToast(`Đã xoá tệp "${name}" thành công!`);
+          fetchLibraryFiles(); // Reload
+        } else {
+          const err = await resp.json().catch(() => ({}));
+          showToast(`Không thể xoá tệp: ${err.message || 'Lỗi server'}`, 'error');
+        }
+      } catch (err) {
+        showToast('Lỗi mạng khi xoá tệp!', 'error');
+        console.error(err);
+      }
+    });
+  });
+}
+
+// Library Search Filter
+if (elements.libSearchInput) {
+  elements.libSearchInput.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    if (!query) {
+      renderLibraryTable(libraryFilesList);
+      return;
+    }
+    const filtered = libraryFilesList.filter(file => file.name.toLowerCase().includes(query));
+    renderLibraryTable(filtered);
+  });
+}
+
+// Event Listeners Registration
 function setupEventListeners() {
   elements.themeToggle.addEventListener('click', toggleTheme);
   elements.loginForm.addEventListener('submit', handleLogin);
   elements.logoutBtn.addEventListener('click', handleLogout);
 
-  // Admin Portal View Tabs
+  // Portal View Tabs Swapping
   elements.tabButtons.forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn));
   });
 
-  // Admin Form Sections Swap (Page 1 vs Page 2 editor)
-  elements.formSecButtons.forEach(btn => {
-    btn.addEventListener('click', () => switchFormSection(btn));
+  // Config toggles
+  elements.configToggleBtn.addEventListener('click', () => {
+    elements.githubConfigPanel.classList.toggle('hidden');
+  });
+  elements.saveConfigBtn.addEventListener('click', saveGitHubConfig);
+  elements.testConfigBtn.addEventListener('click', testGitHubConnection);
+
+  // Drag & Drop event bindings
+  const dropZone = elements.dropZone;
+  
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
   });
 
-  // Form buttons
-  elements.clearFormBtn.addEventListener('click', resetCertificateForm);
-  elements.submitCertBtn.addEventListener('click', handleFormSubmit);
-  elements.exportExcelBtn.addEventListener('click', handleExcelExport);
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+  });
 
-  // Library reload
-  elements.refreshLibraryBtn.addEventListener('click', fetchLibraryFiles);
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) {
+      handleFileSelect(e.dataTransfer.files[0]);
+    }
+  });
 
-  // QR Actions
+  dropZone.addEventListener('click', () => {
+    elements.pdfFileInput.click();
+  });
+
+  elements.pdfFileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      handleFileSelect(e.target.files[0]);
+    }
+  });
+
+  elements.removeFileBtn.addEventListener('click', removeSelectedFile);
+  elements.uploadProcessBtn.addEventListener('click', uploadFileToGitHub);
+
+  // QR Code Action Triggers
   elements.copyLinkBtn.addEventListener('click', copyLinkToClipboard);
   elements.printQrBtn.addEventListener('click', printQRCode);
-  elements.downloadOptions.forEach(btn => {
-    btn.addEventListener('click', () => downloadQRCode(btn.dataset.format));
-  });
+  elements.downloadQrPng.addEventListener('click', () => downloadQRCode('png'));
+  elements.downloadQrSvg.addEventListener('click', () => downloadQRCode('svg'));
 
   // Color Pickers
   elements.qrColorFg.addEventListener('input', (e) => {
@@ -1091,12 +864,14 @@ function setupEventListeners() {
     generateQRCode();
   });
 
-  // Logo upload
+  // Logo insertion in QR code
   elements.uploadLogoBtn.addEventListener('click', () => elements.logoInput.click());
+  
   elements.logoInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
       const file = e.target.files[0];
       const reader = new FileReader();
+      
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
@@ -1105,7 +880,7 @@ function setupEventListeners() {
           elements.uploadLogoBtn.textContent = `Logo: ${file.name.substring(0, 10)}...`;
           elements.removeLogoBtn.classList.remove('hidden');
           generateQRCode();
-          showToast('Đã chèn logo vào mã QR');
+          showToast('Đã chèn logo vào mã QR thành công!');
         };
         img.src = event.target.result;
       };
@@ -1120,112 +895,34 @@ function setupEventListeners() {
     elements.removeLogoBtn.classList.add('hidden');
     elements.logoInput.value = '';
     generateQRCode();
-    showToast('Đã xóa logo');
+    showToast('Đã xoá logo khỏi mã QR');
   });
 
   elements.resetCustomizer.addEventListener('click', resetCustomizerSettings);
-
-  // Public Viewer Tab switches
-  elements.btnViewPage1.addEventListener('click', () => switchPublicViewPage('page1'));
-  elements.btnViewPage2.addEventListener('click', () => switchPublicViewPage('page2'));
-  
-  elements.btnPrintPublicSheet.addEventListener('click', () => {
-    window.print();
-  });
-
-  // ---- Template Upload Events (IndexedDB – works on GitHub Pages) ----
-  if (elements.templateFileInput) {
-    elements.templateFileInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      if (!file.name.toLowerCase().endsWith('.xlsx')) {
-        showToast('Chỉ chấp nhận file .xlsx', 'error');
-        e.target.value = '';
-        return;
-      }
-
-      const span = elements.templateUploadLabel && elements.templateUploadLabel.querySelector('span');
-      if (span) span.textContent = 'Đang lưu...';
-
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        const meta = {
-          name: file.name,
-          size: file.size,
-          updatedAt: new Date().toISOString()
-        };
-        await templateStore.save(arrayBuffer, meta);
-        showToast(`Template "${file.name}" đã lưu vào trình duyệt! ✅`);
-        checkTemplateStatus();
-      } catch (err) {
-        showToast('Lỗi khi lưu template vào trình duyệt', 'error');
-        console.error(err);
-      } finally {
-        e.target.value = '';
-      }
-    });
-  }
-
-  if (elements.templateDeleteBtn) {
-    elements.templateDeleteBtn.addEventListener('click', async () => {
-      if (!confirm('Bạn có chắc muốn xoá file template đã lưu không?')) return;
-      try {
-        await templateStore.remove();
-        showToast('Template đã được xoá.');
-        checkTemplateStatus();
-      } catch (err) {
-        showToast('Lỗi khi xoá template', 'error');
-      }
-    });
-  }
-
-  if (elements.togglePlaceholderGuideBtn) {
-    elements.togglePlaceholderGuideBtn.addEventListener('click', () => {
-      const guide = elements.templatePlaceholderGuide;
-      const btn = elements.togglePlaceholderGuideBtn;
-      if (guide.classList.contains('hidden')) {
-        guide.classList.remove('hidden');
-        btn.textContent = 'Ẩn danh sách placeholder';
-      } else {
-        guide.classList.add('hidden');
-        btn.textContent = 'Xem danh sách placeholder';
-      }
-    });
-  }
+  elements.refreshLibraryBtn.addEventListener('click', fetchLibraryFiles);
 }
 
-// Check template status on server and update UI
-async function checkTemplateStatus() {
-  if (!elements.templateStatusText) return;
-  try {
-    const meta = await templateStore.loadMeta();
-    if (meta) {
-      const kb = Math.round(meta.size / 1024);
-      const updated = new Date(meta.updatedAt).toLocaleString('vi-VN');
-      elements.templateStatusText.textContent = `✅ Template: ${meta.name} (${kb} KB) – Tải lên: ${updated}`;
-      if (elements.templateDeleteBtn) elements.templateDeleteBtn.classList.remove('hidden');
-      const span = elements.templateUploadLabel && elements.templateUploadLabel.querySelector('span');
-      if (span) span.textContent = 'Thay thế Template';
-    } else {
-      elements.templateStatusText.textContent = 'Chưa có template. Hãy tải lên file Excel mẫu (.xlsx).';
-      if (elements.templateDeleteBtn) elements.templateDeleteBtn.classList.add('hidden');
-      const span = elements.templateUploadLabel && elements.templateUploadLabel.querySelector('span');
-      if (span) span.textContent = 'Tải lên Template';
-    }
-  } catch (err) {
-    console.warn('checkTemplateStatus error:', err);
-  }
+// Utility: Bytes Formatter
+function formatBytes(bytes, decimals = 2) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-// Toast System
+// Toast Alert System
 function showToast(message, type = 'success') {
   const container = document.getElementById('toast-container');
+  if (!container) return;
+  
   const toast = document.createElement('div');
   toast.className = `toast ${type === 'error' ? 'toast-error' : 'toast-success'}`;
   
   const icon = type === 'error' 
-    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
-    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
 
   toast.innerHTML = `${icon}<span>${message}</span>`;
   container.appendChild(toast);
@@ -1233,5 +930,5 @@ function showToast(message, type = 'success') {
   setTimeout(() => {
     toast.style.animation = 'toastSlideIn 0.25s ease reverse forwards';
     toast.addEventListener('animationend', () => toast.remove());
-  }, 3000);
+  }, 4000);
 }
