@@ -163,16 +163,24 @@ function loadGitHubConfig() {
   const savedConfig = localStorage.getItem('rkv_github_config');
   if (savedConfig) {
     try {
-      state.githubConfig = { ...state.githubConfig, ...JSON.parse(savedConfig) };
+      const loaded = JSON.parse(savedConfig);
+      // Only merge non-empty values
+      if (loaded.owner) state.githubConfig.owner = loaded.owner;
+      if (loaded.repo) state.githubConfig.repo = loaded.repo;
+      if (loaded.branch) state.githubConfig.branch = loaded.branch;
+      if (loaded.folder) state.githubConfig.folder = loaded.folder;
+      if (loaded.token) state.githubConfig.token = loaded.token;
     } catch (e) {
       console.error('Lỗi khi đọc config GitHub từ localStorage', e);
     }
   }
   
-  // If the loaded token is empty, fallback to the hardcoded default token
-  if (!state.githubConfig.token) {
-    state.githubConfig.token = defaultToken;
-  }
+  // Absolute fallback for empty / missing values
+  if (!state.githubConfig.owner) state.githubConfig.owner = 'YangKoi';
+  if (!state.githubConfig.repo) state.githubConfig.repo = 'rkv_temp_calib';
+  if (!state.githubConfig.branch) state.githubConfig.branch = 'main';
+  if (!state.githubConfig.folder) state.githubConfig.folder = 'RIKEN VIET';
+  if (!state.githubConfig.token) state.githubConfig.token = defaultToken;
   
   // Fill inputs
   elements.cfgOwner.value = state.githubConfig.owner;
