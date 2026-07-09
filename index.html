@@ -181,6 +181,18 @@
                   </div>
                 </div>
 
+                <!-- Filename Reservation / Custom Target Name -->
+                <div class="form-group" style="margin-top: 0.5rem; margin-bottom: 0.5rem; text-align: left;">
+                  <label for="target-filename-input" style="font-size: 0.82rem; font-weight: 600;">Tên file PDF lưu trên GitHub (không cần nhập đuôi .pdf):</label>
+                  <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="target-filename-input" placeholder="Ví dụ: GCNHChinh-BAOLAN-GX-6100" style="flex: 1; padding: 0.65rem 0.85rem; font-size: 0.88rem; background: var(--bg-input); border: 1px solid var(--border-glass); border-radius: 12px; color: var(--text-primary); font-family: var(--font-family);">
+                    <button type="button" id="pre-generate-qr-btn" class="secondary-btn" style="padding: 0.65rem 1rem; font-size: 0.85rem; white-space: nowrap; border-radius: 12px;">Tạo QR Chờ</button>
+                  </div>
+                  <span class="sub-text" style="font-size: 0.72rem; margin-top: 2px; color: var(--text-secondary); display: block;">
+                    * Bạn có thể điền tên gợi nhớ rồi bấm "Tạo QR Chờ" để in dán trước, sau đó upload file PDF trùng tên này lên sau.
+                  </span>
+                </div>
+
                 <!-- Generate Trigger Button -->
                 <button id="upload-process-btn" class="primary-btn process-btn" disabled>
                   Tải lên &amp; Xuất mã QR
@@ -341,6 +353,6 @@
   </div>
   
   <!-- Script Controller -->
-  <script src="app.js?v=1.0.6"></script>
+  <script src="app.js?v=1.0.7"></script>
 </body>
 </html>

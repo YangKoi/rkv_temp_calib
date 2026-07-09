@@ -67,6 +67,8 @@ const elements = {
   fileDisplaySize: document.getElementById('file-display-size'),
   removeFileBtn: document.getElementById('remove-file-btn'),
   uploadProcessBtn: document.getElementById('upload-process-btn'),
+  targetFilenameInput: document.getElementById('target-filename-input'),
+  preGenerateQrBtn: document.getElementById('pre-generate-qr-btn'),
   
   // Progress Bar
   uploadProgressContainer: document.getElementById('upload-progress-container'),
@@ -311,6 +313,13 @@ function handleFileSelect(file) {
   elements.fileDisplayName.textContent = file.name;
   elements.fileDisplaySize.textContent = formatBytes(file.size);
   
+  // Strip .pdf for visual input
+  let cleanName = file.name;
+  if (cleanName.toLowerCase().endsWith('.pdf')) {
+    cleanName = cleanName.substring(0, cleanName.length - 4);
+  }
+  elements.targetFilenameInput.value = cleanName;
+  
   elements.dropZone.classList.add('hidden');
   elements.selectedFileCard.classList.remove('hidden');
   elements.uploadProcessBtn.removeAttribute('disabled');
@@ -318,6 +327,7 @@ function handleFileSelect(file) {
 
 function removeSelectedFile() {
   state.selectedFile = null;
+  elements.targetFilenameInput.value = '';
   elements.dropZone.classList.remove('hidden');
   elements.selectedFileCard.classList.add('hidden');
   elements.uploadProcessBtn.setAttribute('disabled', 'true');
@@ -410,8 +420,14 @@ async function uploadFileToGitHub() {
     
     // Check if file already exists on GitHub to handle overwrite / SHA requirement
     // Path: RIKEN VIET/filename.pdf
+    let cleanFileName = elements.targetFilenameInput.value.trim();
+    if (!cleanFileName) {
+      cleanFileName = file.name.trim();
+    }
+    if (!cleanFileName.toLowerCase().endsWith('.pdf')) {
+      cleanFileName += '.pdf';
+    }
     const cleanFolderName = config.folder.trim().replace(/\/+$/, '');
-    const cleanFileName = file.name.trim();
     const filePath = cleanFolderName ? `${cleanFolderName}/${cleanFileName}` : cleanFileName;
     
     elements.uploadStatusText.textContent = 'Đang tải tệp lên GitHub...';
@@ -938,6 +954,34 @@ function setupEventListeners() {
 
   elements.resetCustomizer.addEventListener('click', resetCustomizerSettings);
   elements.refreshLibraryBtn.addEventListener('click', fetchLibraryFiles);
+
+  elements.preGenerateQrBtn.addEventListener('click', () => {
+    let cleanFileName = elements.targetFilenameInput.value.trim();
+    if (!cleanFileName) {
+      showToast('Vui lòng nhập tên file dự kiến!', 'error');
+      return;
+    }
+    if (!cleanFileName.toLowerCase().endsWith('.pdf')) {
+      cleanFileName += '.pdf';
+    }
+    
+    const config = state.githubConfig;
+    const cleanFolderName = config.folder.trim().replace(/\/+$/, '');
+    const filePath = cleanFolderName ? `${cleanFolderName}/${cleanFileName}` : cleanFileName;
+    
+    const pagesUrl = `https://${config.owner.toLowerCase()}.github.io/${config.repo}/${encodeURI(filePath)}`;
+    
+    state.activeQRUrl = pagesUrl;
+    state.activeCertName = cleanFileName;
+    
+    generateQRCode(() => {
+      elements.copyLinkBtn.removeAttribute('disabled');
+      elements.printQrBtn.removeAttribute('disabled');
+      elements.downloadQrPng.removeAttribute('disabled');
+      elements.downloadQrSvg.removeAttribute('disabled');
+      showToast(`Đã tạo QR chờ cho: ${cleanFileName} (Có thể in dán trước!) ✅`);
+    });
+  });
 }
 
 // Utility: Bytes Formatter
