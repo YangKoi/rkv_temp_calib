@@ -191,14 +191,21 @@ function loadGitHubConfig() {
 }
 
 function saveGitHubConfig() {
-  state.githubConfig.owner = elements.cfgOwner.value.trim();
-  state.githubConfig.repo = elements.cfgRepo.value.trim();
-  state.githubConfig.branch = elements.cfgBranch.value.trim();
-  state.githubConfig.folder = elements.cfgFolder.value.trim();
-  state.githubConfig.token = elements.cfgToken.value.trim();
+  state.githubConfig.owner = elements.cfgOwner.value.trim() || 'YangKoi';
+  state.githubConfig.repo = elements.cfgRepo.value.trim() || 'rkv_temp_calib';
+  state.githubConfig.branch = elements.cfgBranch.value.trim() || 'main';
+  state.githubConfig.folder = elements.cfgFolder.value.trim() || 'RIKEN VIET';
+  state.githubConfig.token = elements.cfgToken.value.trim() || defaultToken;
 
   localStorage.setItem('rkv_github_config', JSON.stringify(state.githubConfig));
   showToast('Đã lưu thông số cấu hình GitHub');
+  
+  // Re-fill inputs to reflect the fallbacks
+  elements.cfgOwner.value = state.githubConfig.owner;
+  elements.cfgRepo.value = state.githubConfig.repo;
+  elements.cfgBranch.value = state.githubConfig.branch;
+  elements.cfgFolder.value = state.githubConfig.folder;
+  elements.cfgToken.value = state.githubConfig.token;
 }
 
 // Check Connection to GitHub
