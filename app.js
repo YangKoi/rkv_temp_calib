@@ -50,6 +50,7 @@ const elements = {
   githubConfigPanel: document.getElementById('github-config-panel'),
   saveConfigBtn: document.getElementById('save-config-btn'),
   testConfigBtn: document.getElementById('test-config-btn'),
+  resetConfigBtn: document.getElementById('reset-config-btn'),
   
   // Config Inputs
   cfgOwner: document.getElementById('cfg-owner'),
@@ -837,6 +838,20 @@ function setupEventListeners() {
   });
   elements.saveConfigBtn.addEventListener('click', saveGitHubConfig);
   elements.testConfigBtn.addEventListener('click', testGitHubConnection);
+  elements.resetConfigBtn.addEventListener('click', () => {
+    if (confirm('Bạn có muốn khôi phục cấu hình mặc định (bao gồm cả Token Riken Viet)?')) {
+      localStorage.removeItem('rkv_github_config');
+      state.githubConfig = {
+        owner: 'YangKoi',
+        repo: 'rkv_temp_calib',
+        branch: 'main',
+        folder: 'RIKEN VIET',
+        token: defaultToken
+      };
+      loadGitHubConfig();
+      showToast('Đã khôi phục cấu hình mặc định!');
+    }
+  });
 
   // Drag & Drop event bindings
   const dropZone = elements.dropZone;
